@@ -1,12 +1,12 @@
-#import transformers
+import transformers
 from os.path import abspath, dirname, split, join
 
-# REPO_DIR = join(*split(abspath(dirname(__file__)))[:-1])
-ROOT_DIR = abspath(dirname(__file__))
+ROOT_DIR = join(*split(abspath(dirname(__file__)))[:-1])
+#ROOT_DIR = abspath(dirname(__file__))
 
-TRAINING_FILE = "input/peoples_daily/example.train.txt"
-DEV_FILE = "input/peoples_daily/example.dev.txt"
-TEST_FILE = "input/peoples_daily/example.test.txt"
+TRAINING_FILE = "data/example.train"
+DEV_FILE = "data/example.dev"
+TEST_FILE = "data/example.test"
 
 BASE_MODEL = "bert-base-chinese"
 

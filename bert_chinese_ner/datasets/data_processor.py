@@ -1,25 +1,13 @@
 import os
-import json
+from collections import Counter
 import importlib
 import opencc
 
 import bert_chinese_ner
 from bert_chinese_ner import config
 
-print(config)
-
-
 importlib.reload(bert_chinese_ner)
 importlib.reload(config)
-
-os.getcwd()
-
-
-file_path = valid_path
-
-
-converter = opencc.OpenCC('s2t.json')
-converter.convert('汉字')
 
 
 path = config.ROOT_DIR
@@ -27,34 +15,31 @@ train_file = config.TRAINING_FILE
 dev_file = config.DEV_FILE
 
 
-file_path = dev_path
+converter = opencc.OpenCC('s2t.json')
 
-aa = ['在 O', '这 O', '里 O', '恕 O', '弟 O', '不 O', '恭 O']
-aa = ['在 O', '这 O', '里 O', '恕 O', '弟 O', '不 O', '恭 O', '之 O', '罪 O', '， O', '敢 O', '在 O', '尊 O', '前 O', '一 O', '诤 O', '： O', '前 O', '人 O', '论 O', '书 O', '， O', '每 O', '曰 O', '“ O', '字 O', '字 O', '有 O', '来 O', '历 O', '， O', '笔 O', '笔 O', '有 O', '出 O', '处 O', '” O', '， O', '细 O', '读 O', '公 O', '字 O', '， O', '何 O', '尝 O', '跳 O', '出 O', '前 O', '人 O', '藩 O', '篱 O', '， O', '自 O', '隶 O', '变 O', '而 O', '后 O', '， O', '直 O', '至 O', '明 O', '季 O', '， O', '兄 O', '有 O', '何 O', '新 O', '出 O', '？ O', '', '相 O', '比 O', '之 O', '下 O', '， O', '青 B-ORG', '岛 I-ORG', '海 I-ORG', '牛 I-ORG', '队 I-ORG', '和 O', '广 B-ORG', '州 I-ORG', '松 I-ORG', '日 I-ORG', '队 I-ORG', '的 O', '雨 O', '中 O', '之 O', '战 O', '虽 O', '然 O', '也 O', '是 O', '0 O', '∶ O', '0 O', '， O', '但 O', '乏 O', '善 O', '可 O', '陈 O', '。 O', '', '理 O', '由 O', '多 O', '多 O', '， O', '最 O', '无 O', '奈 O', '的 O', '却 O', '是 O', '： O', '5 O', '月 O', '恰 O', '逢 O', '双 O', '重 O', '考 O', '试 O', '， O', '她 O', '攻 O', '读 O', '的 O', '博 O', '士 O', '学 O', '位 O', '论 O', '文 O', '要 O', '通 O', '考 O', '； O', '她 O', '任 O', '教 O', '的 O', '两 O', '所 O', '学 O', '校 O', '， O', '也 O', '要 O', '在 O', '这 O', '段 O', '时 O', '日 O', '大 O', '考 O', '。 O', '', '分 O', '工 O', '， O', '各 O', '有 O', '各 O', '的 O', '责 O', '任 O', '； O', '合 O', '作 O', '， O', '正 O', '副 O', '经 O', '理 O', '之 O', '间 O', '， O', '全 O', '厂 O', '的 O', '事 O', '， O', '不 O', '管 O', '由 O', '谁 O', '分 O', '管 O', '， O', '也 O', '不 O', '管 O', '你 O', '有 O', '什 O', '么 O', '事 O', '找 O', '到 O', '谁 O', '， O', '绝 O', '不 O', '会 O', '把 O', '你 O', '推 O', '给 O', '第 O', '二 O', '个 O', '人 O', '。 O', '', '胡 B-PER', '老 O', '说 O', '， O', '当 O', '画 O', '画 O', '疲 O', '倦 O', '时 O', '就 O', '到 O', '院 O', '里 O', '去 O', '看 O', '看 O', '， O', '给 O', '这 O', '盆 O', '花 O', '浇 O', '点 O', '水 O', '， O', '给 O', '那 O', '棵 O', '花 O', '剪 O', '剪 O', '枝 O', '， O', '回 O', '来 O', '再 O', '接 O', '着 O', '画 O', '， O', '画 O', '累 O', '了 O', '再 O', '出 O', '去 O', '， O', '如 O', '此 O', '循 O', '环 O', '往 O', '复 O', '， O', '脑 O', '体 O', '结 O', '合 O']
-len(aa)
-aa.split()
-
-('\n'.join(aa)).split('\n')
-
-
-
-
-
-
-def _parse_data(file_path, text_index=0, label_index=1):
-    x_data = [], y_data = []
+def _parse_data(file_path, converter,  text_index=0, label_index=1):
+    """
+    Convert the raw text data to x_data:[list of lists(sentences composed of char)]),
+    and y_data:[list of lists(corresponding labels of each sentences)]
+    :param file_path:
+    :param converter:
+    :param text_index:
+    :param label_index:
+    :return:
+    """
+    x_data, y_data = [], []
     with open(file_path, 'r', encoding='utf-8') as f:
         lines = f.read().splitlines()
-        lines = converter.convert('\n'.join(lines[:100])).split('\n')
+        # simplified chinese -> traditional chinese
+        lines = converter.convert('\n'.join(lines)).split('\n')
         # lines: ['在 O', '這 O', ..., '罪 O']
-        print(lines, '\n\n')
         one_samp_x, one_samp_y = [], []
         for line in lines:
             # '在 O' -> ['在', 'O'], '這 O' -> ['這', 'O'],...
             row = line.split(' ')
             if len(row) == 1:
-                x_data.append(x) # Add a complete sample to x_data
-                y_data.append(y)
+                x_data.append(one_samp_x) # Add a complete sample to x_data
+                y_data.append(one_samp_y)
                 one_samp_x = [] # reset the sample container
                 one_samp_y = []
             else:
@@ -63,11 +48,121 @@ def _parse_data(file_path, text_index=0, label_index=1):
     return x_data, y_data
 
 
+def _build_vocab(train_data, dev_data, min_freq):
+    ## Build a vocab_to_int dict that maps words to integers
+    word_counts = Counter(char.lower() for sample in train_data[0] + dev_data[0] for char in sample)
 
-def load_data(path=None, train_file=None, dev_file=None):
+    vocab = [w for w, c in word_counts.items() if c >= min_freq]
+    vocab_to_int = {w: (i + 1) for i, w in enumerate(vocab)}
+    vocab = ['<PAD>'] + vocab + ['<UNK>']
+    vocab_to_int['<UNK>'] = len(vocab_to_int)
+    vocab_to_int['<PAD>'] = 0
+
+    ## Build a dictionary that maps tags to integers
+    tag_set = set([tag for sample in train[1] + dev[1] for tag in sample])
+    tag_to_int = {t: (i+1) for i, t in enumerate(tag_set)}
+    tag_to_int['<PAD>'] = len(tag_to_int)
+
+    return vocab_to_int, tag_to_int
+
+
+
+def preprocess_data(path=None, train_file=None, dev_file=None, min_freq=2):
     train_path = os.path.join(path, train_file)
     dev_path = os.path.join(path, dev_file)
 
-    train = _parse_data(train_path)
-    dev = _parse_data(dev_path)
+    train = _parse_data(train_path, converter)
+    dev = _parse_data(dev_path, converter)
+
+    vocab_to_int, tag_to_int = _build_vocab(train, dev, min_freq)
+
+    return train, dev, vocab_to_int, tag_to_int
+
+
+
+
+
+
+
+
+
+word2idx = dict((w, i) for i, w in enumerate(character))
+
+## Build a dictionary that maps words to integers
+words_count = Counter(data["Word"])
+vocab_to_int = {w: (i+1) for i, w in enumerate(words_count)}
+vocab_to_int['UNK'] = len(vocab_to_int)
+vocab_to_int['<PAD>'] = 0
+
+
+
+
+
+
+
+class
+
+
+
+class EntityDataset:
+        def __init__(self, texts, pos, tags):
+            # texts: list of list [["Hi", "," , "my", "name", "is", "rocio"], ["Hello",...."], ...]
+            # pos/tags: list of list [[1 2 3 4 5], [...], ...]
+            self.texts = texts
+            self.pos = pos
+            self.tags = tags
+
+        def __len__(self):
+            return len(self.texts)
+
+        def __getitem__(self, item):
+            text = self.texts[item]  # e.g. ["Hi", "," , "my", "name", "is", "rocio"]
+            pos = self.pos[item]
+            tags = self.tags[item]
+
+            # The text is already tokenized, but it's not tokenized for BERT,
+            # we have to tokenize it for BERT
+            ids = []
+            target_pos = []
+            target_tag = []
+
+            for i, s in enumerate(text):
+                inputs = config.TOKENIZER.encode(
+                    s,  # one word e.g. rocio
+                    add_special_tokens=False  # whether to add the special token as <CLS>, <SEP>
+                )
+                # word piece e.g. rocio -> ro ##cio
+                inputs_len = len(inputs)
+                ids.extend(inputs)
+                target_pos.extend([pos[i]] * inputs_len)
+                target_tag.extend([tags[i]] * inputs_len)
+
+            ids = ids[:config.MAX_LEN - 2]  # because we'll add special token <CLS> and <SEP> later
+            target_pos = target_pos[:config.MAX_LEN - 2]
+            target_tag = target_tag[:config.MAX_LEN - 2]
+
+            ids = [101] + ids + [102]  # <CLS> + ids + <SEP>
+            target_pos = [0] + target_pos + [0]
+            target_tag = [0] + target_tag + [0]
+
+            # attention masks
+            mask = [1] * len(ids)
+            token_type_ids = [0] * len(ids)  # Create a mask from the two sequences
+
+            ## Pad the inputs on the right hand side
+            padding_len = config.MAX_LEN - len(ids)
+
+            ids = ids + ([0] * padding_len)
+            mask = mask + ([0] * padding_len)
+            token_type_ids = token_type_ids + ([0] * padding_len)
+            target_pos = target_pos + ([0] * padding_len)
+            target_tag = target_tag + ([0] * padding_len)
+
+            return {
+                "ids": torch.tensor(ids, dtype=torch.long),
+                "mask": torch.tensor(mask, dtype=torch.long),
+                "token_type_ids": torch.tensor(token_type_ids, dtype=torch.long),
+                "target_pos": torch.tensor(target_pos, dtype=torch.long),
+                "target_tag": torch.tensor(target_tag, dtype=torch.long)
+            }
 

@@ -10,11 +10,6 @@ importlib.reload(bert_chinese_ner)
 importlib.reload(config)
 
 
-path = config.ROOT_DIR
-train_file = config.TRAINING_FILE
-dev_file = config.DEV_FILE
-
-
 converter = opencc.OpenCC('s2t.json')
 
 def _parse_data(file_path, converter,  text_index=0, label_index=1):
@@ -35,6 +30,7 @@ def _parse_data(file_path, converter,  text_index=0, label_index=1):
         # lines: ['在 O', '這 O', ..., '罪 O']
         one_samp_x, one_samp_y = [], []
         for line in lines:
+            # line: '在 O'
             # '在 O' -> ['在', 'O'], '這 O' -> ['這', 'O'],...
             row = line.split(' ')
             if len(row) == 1:

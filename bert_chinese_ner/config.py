@@ -8,9 +8,13 @@ TRAINING_FILE = "data/example.train"
 DEV_FILE = "data/example.dev"
 TEST_FILE = "data/example.test"
 
-BASE_MODEL = "bert-base-chinese"
+BASE_MODEL_NAME = "bert-base-chinese"
+VOCAB_FILE = join("data", BASE_MODEL_NAME, "vocab.txt")
 
-# TOKENIZER = transformers.BertTokenizer.from_pretrained(
-#     BASE_MODEL,
-#     do_lower_case=False
-# )
+
+MAX_LEN = 128
+
+TOKENIZER = transformers.BertTokenizer.from_pretrained(
+    BASE_MODEL_NAME,
+    do_lower_case=False
+)

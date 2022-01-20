@@ -72,11 +72,6 @@ def _build_vocab(train_data, dev_data, min_freq):
 
     return vocab_to_int, tag_to_int
 
-from sklearn import preprocessing
-ee = preprocessing.LabelEncoder()
-ee.fit_transform(list(tag_set))
-
-
 
 
 def preprocess_data(path=None, train_file=None, dev_file=None, min_freq=2):
@@ -92,40 +87,6 @@ def preprocess_data(path=None, train_file=None, dev_file=None, min_freq=2):
 
 
 
-
-class CNerTokenizer(BertTokenizer):
-    def __init__(self, vocab_file, do_lower_case=False):
-        super().__init__(vocab_file=str(vocab_file), do_lower_case=do_lower_case)
-        self.vocab_file = str(vocab_file)
-        self.do_lower_case = do_lower_case
-
-    def tokenize(self, text):
-        _tokens = []
-        for c in text:
-            if self.do_lower_case:
-                c = c.lower()
-            if c in self.vocab:
-                _tokens.append(c)
-            else:
-                _tokens.append('[UNK]')
-        return _tokens
-
-def load_vocab(vocab_file):
-    """Loads a vocabulary file into a dictionary."""
-    vocab = collections.OrderedDict()
-    with open(vocab_file, "r", encoding="utf-8") as reader:
-        tokens = reader.readlines()
-    for index, token in enumerate(tokens):
-        token = token.rstrip('\n')
-        vocab[token] = index
-    return vocab
-
-
-
-
-tt = BertTokenizer.from_pretrained("bert-base-chinese", do_lower_case=False)
-
-tt.tokenize("今天天氣真好！星期二，猴子肚子餓。")
 
 
 

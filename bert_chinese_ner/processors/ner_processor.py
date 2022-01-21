@@ -1,7 +1,7 @@
 import os
 
 from .utils_ner import DataProcessor
-from bert_chinese_ner.processors.utils_ner import DataProcessor
+from bert_chinese_ner.processors.utils_ner import DataProcessor, InputExample, InputFeatures
 
 from bert_chinese_ner import config
 
@@ -42,6 +42,61 @@ class CNerProcessor(DataProcessor):
             guid = f"{set_type}-{i}"
             text = row['words']
             labels = row['labels']
-        examples.append(InputExample(guid=guid, text=text, label=labels))
+            examples.append(InputExample(guid=guid, text=text, label=labels))
 
         return examples
+
+
+def convert_examples_to_features(examples, label_list, tokenizer, max_seq_length, pad_on_right=True):
+    """ Loads a data file into a list of `InputBatch`s
+
+        Args:
+            pad_on_right: Default to True. Padding the sequence on the right hand side.
+    """
+    label_map = {label: i for i, label in enumerate(label_list)}
+    features = []
+    for idx, example in enumerate(examples):
+        tokens = example.text
+        label_ids = [label_map[l] for l in example.label]
+        # Account for [CLS] and [SEP] with "- 2".
+        tokens = tokens[:max_seq_length - 2]
+        label_ids = label_ids[:max_seq_length - 2]
+
+        input_ids = tokenizer.encode(tokens, add_special_tokens=False)
+
+        input_ids = [101] + input_ids + [102]  # [CLS] + input_ids + [SEP]
+        label_ids = [0] + label_ids + [0]
+
+        # attention mask
+        # only the real token with value 1 are attends to, and pads tokens with 0.
+        mask = [1] * len(input_ids)
+
+        # Segment the two sequences
+        token_type_ids = [0] * len(input_ids)
+
+        ## Pad the inputs on the right hand side
+        padding_len = max_seq_length - len(input_ids)
+
+        if pad_on_right:
+            input_ids = input_ids + [0] * padding_len
+            mask = mask + [0] * padding_len
+            token_type_ids = token_type_ids + [0] * padding_len
+            label_ids = label_ids + [0] * padding_len
+        else:
+            input_ids = [0] * padding_len + input_ids
+            mask = [0] * padding_len + mask
+            token_type_ids = [0] * padding_len + token_type_ids
+            label_ids = [0] * padding_len + label_ids
+
+        assert len(input_ids) == max_seq_length
+        assert len(mask) == max_seq_length
+        assert len(token_type_ids) == max_seq_length
+        assert len(label_ids) == max_seq_length
+
+        features.append(InputFeatures(input_ids=input_ids,
+                                      attention_mask=mask,
+                                      token_type_ids=token_type_ids,
+                                      label_ids=label_ids))
+
+        return features
+

@@ -32,14 +32,14 @@ class InputFeatures:
         attention_mask: Mask to avoid performing attention on padding token indices.
         token_type_ids: Segment token indices to indicate first and second
             portions of the inputs.
-        label: (Optional) Label corresponding to the input. Int for classification problems,
+        label_ids: (Optional) Label corresponding to the input. Int for classification problems,
             float for regression problems.
     """
 
     input_ids: List[int]
     attention_mask: List[int] = None
     token_type_ids: List[int] = None
-    label: Optional[Union[int, float]] = None
+    label_ids: Optional[Union[int, float]] = None
 
 
 class DataProcessor:

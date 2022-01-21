@@ -30,10 +30,8 @@ class InputFeatures:
     Args:
         input_ids: Indices of input sequence tokens in the vocabulary.
         attention_mask: Mask to avoid performing attention on padding token indices.
-            Mask values selected in `[0, 1]`: Usually `1` for tokens that are NOT MASKED, `0` for MASKED (padded)
-            tokens.
         token_type_ids: Segment token indices to indicate first and second
-            portions of the inputs. Only some models use them.
+            portions of the inputs.
         label: (Optional) Label corresponding to the input. Int for classification problems,
             float for regression problems.
     """
@@ -64,17 +62,15 @@ class DataProcessor:
         raise NotImplementedError()
 
     @classmethod
-    def _read_tsv(cls, input_file, quotechar=None):
-        """Reads a tab separated value file."""
-        with open(input_file, "r", encoding="utf-8-sig") as f:
-            return list(csv.reader(f, delimiter="\t", quotechar=quotechar))
-
-    @classmethod
     def _read_text(self, input_file):
         """Reads a text file."""
-        data = []
+        rows = []
         with open(input_file, 'r', encoding="utf-8") as f:
+            # a sequence of text which represents one example.
+            # e.g. ['海', '釣', ..., '。']
             words = []
+            # a sequence of label which represents one example
+            # e.g. ['O', 'O', ..., 'O']
             labels = []
             lines = f.read().splitlines()
             # simplified chinese -> traditional chinese
@@ -84,7 +80,7 @@ class DataProcessor:
             for line in lines:
                 if line == "" or line == "\n":
                     if words:
-                        data.append({"words":words, "labels":labels})
+                        rows.append({"words":words, "labels":labels})
                         words = []
                         labels = []
                 else:
@@ -98,7 +94,9 @@ class DataProcessor:
                         # e.g. splits: ['海']
                         labels.append("O")
 
-        return data
+        # data: List[Dict['words': List[str], 'labels': List[str]]]
+
+        return rows
 
 
 

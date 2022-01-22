@@ -5,6 +5,7 @@ import time
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List, Optional, Union
+# import importlib ##
 
 import torch
 from torch.utils.data import Dataset
@@ -13,8 +14,8 @@ from bert_chinese_ner import config
 from bert_chinese_ner.processors.ner_processor import CNerProcessor, convert_examples_to_features
 
 
-importlib.reload(bert_chinese_ner)
-importlib.reload(config)
+# importlib.reload(bert_chinese_ner) ##
+# importlib.reload(config) ##
 
 
 @dataclass
@@ -75,11 +76,25 @@ class NerDataset(Dataset):
     def __len__(self):
         return len(self.features)
 
-    def __getitem__(self, item) -> InputFeatures:
-        return self.features[item]
+    def __getitem__(self, i) -> Dict[str, torch.Tensor]:
+        # Convert to Tensors and build dataset
+        feature = self.features[i]
 
-    def get_labels(self):
-        return self.label_list
+        input_ids = torch.tensor(feature.input_ids, dtype=torch.long)
+        attention_mask = torch.tensor(feature.attention_mask, dtype=torch.long)
+        token_type_ids = torch.tensor(feature.token_type_ids, dtype=torch.long)
+        label_ids = torch.tensor(feature.label_ids, dtype=torch.long)
+
+        inputs = {
+            'input_ids': input_ids,
+            'attention_mask': attention_mask,
+            'token_type_ids': token_type_ids,
+            'label_ids': label_ids
+        }
+
+        return inputs
+
+
 
 
 

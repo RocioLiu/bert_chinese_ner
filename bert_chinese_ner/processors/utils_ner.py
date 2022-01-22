@@ -22,7 +22,7 @@ class InputExample:
     label: Optional[List[str]] = None
 
 
-@dataclass(frozen=True)
+@dataclass
 class InputFeatures:
     """
     A single set of features of data. Property names are the same names as the corresponding inputs to a model.
@@ -37,9 +37,9 @@ class InputFeatures:
     """
 
     input_ids: List[int]
-    attention_mask: List[int] = None
-    token_type_ids: List[int] = None
-    label_ids: Optional[Union[int, float]] = None
+    attention_mask: List[int]
+    token_type_ids: List[int]
+    label_ids: List[int]
 
 
 class DataProcessor:

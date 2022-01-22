@@ -1,12 +1,13 @@
 import os
+import importlib ##
 
+import bert_chinese_ner
 from .utils_ner import DataProcessor
 from bert_chinese_ner.processors.utils_ner import DataProcessor, InputExample, InputFeatures
-
 from bert_chinese_ner import config
 
-importlib.reload(bert_chinese_ner)
-importlib.reload(config)
+importlib.reload(bert_chinese_ner) ##
+importlib.reload(config) ##
 
 
 class CNerProcessor(DataProcessor):
@@ -47,7 +48,12 @@ class CNerProcessor(DataProcessor):
         return examples
 
 
-def convert_examples_to_features(examples, label_list, tokenizer, max_seq_length, pad_on_right=True):
+def convert_examples_to_features(
+        examples: List[InputExample],
+        tokenizer=None,
+        label_list=None,
+        max_seq_length: Optional[int] = None,
+        pad_on_right=True):
     """ Loads a data file into a list of `InputBatch`s
 
         Args:
@@ -93,6 +99,13 @@ def convert_examples_to_features(examples, label_list, tokenizer, max_seq_length
         assert len(token_type_ids) == max_seq_length
         assert len(label_ids) == max_seq_length
 
+        # {
+        #     "text_ids": torch.tensor(text_ids, dtype=torch.long),
+        #     "mask": torch.tensor(mask, dtype=torch.long),
+        #     "token_type_ids": torch.tensor(token_type_ids, dtype=torch.long),
+        #     "tag_ids": torch.tensor(tag_ids, dtype=torch.long)
+        # }
+
         features.append(InputFeatures(input_ids=input_ids,
                                       attention_mask=mask,
                                       token_type_ids=token_type_ids,
@@ -100,3 +113,7 @@ def convert_examples_to_features(examples, label_list, tokenizer, max_seq_length
 
         return features
 
+
+
+processor = CNerProcessor()
+examples = processor.get_dev_examples(config.DATA_DIR)

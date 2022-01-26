@@ -56,6 +56,36 @@ from ...modeling_utils import (
 from ...utils import logging
 from .configuration_bert import BertConfig
 
+# #--- test if we can import all modules
+# from bert_chinese_ner.models.transformers.activations import ACT2FN
+# from bert_chinese_ner.models.transformers.file_utils import (
+#     ModelOutput,
+#     add_code_sample_docstrings,
+#     add_start_docstrings,
+#     add_start_docstrings_to_model_forward,
+#     replace_return_docstrings,
+# )
+# from bert_chinese_ner.models.transformers.modeling_outputs import (
+#     BaseModelOutputWithPastAndCrossAttentions,
+#     BaseModelOutputWithPoolingAndCrossAttentions,
+#     CausalLMOutputWithCrossAttentions,
+#     MaskedLMOutput,
+#     MultipleChoiceModelOutput,
+#     NextSentencePredictorOutput,
+#     QuestionAnsweringModelOutput,
+#     SequenceClassifierOutput,
+#     TokenClassifierOutput,
+# )
+# from bert_chinese_ner.models.transformers.modeling_utils import (
+#     PreTrainedModel,
+#     apply_chunking_to_forward,
+#     find_pruneable_heads_and_indices,
+#     prune_linear_layer,
+# )
+# from bert_chinese_ner.models.transformers.utils import logging
+# from bert_chinese_ner.models.transformers.models.bert.configuration_bert import BertConfig
+# #---
+
 
 logger = logging.get_logger(__name__)
 

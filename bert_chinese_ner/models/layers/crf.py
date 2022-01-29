@@ -285,6 +285,7 @@ class CRF(nn.Module):
 
             # Find the maximum score over all possible current tag
             # shape: (batch_size, num_tags)
+            # indices is the tag at last timestep which maximize the score at this timestep
             next_score, indices = next_score.max(dim=1)
 
             # Set score to the next score if this timestep is valid (mask == 1)
@@ -304,21 +305,26 @@ class CRF(nn.Module):
 
         for idx in range(batch_size):
             # Find the tag which maximizes the score at the last timestep; this is our best tag
-            # for the last timestep
+            # for the last timestep.
+            # We track from the end step first, which we didn't save where its best tag
+            # candidate transitioned from.
             _, best_last_tag = score[idx].max(dim=0)
             best_tags = [best_last_tag.item()]
 
             # We trace back where the best last tag comes from, append that to our best tag
-            # sequence, and trace it back again, and so on
+            # sequence, and trace it back again, and so on.
             for hist in reversed(history[:seq_ends[idx]]):
                 best_last_tag = hist[idx][best_tags[-1]]
                 best_tags.append(best_last_tag.item())
 
-            # Reverse the order because we start from the last timestep
-            best_tags.reverse()
-            best_tags_list.append(best_tags)
+                # Reverse the order because we start from the last timestep
+                best_tags.reverse()
+                best_tags_list.append(best_tags)
 
-        return best_tags_list
+            return best_tags_list
+
+
+
 
 
 

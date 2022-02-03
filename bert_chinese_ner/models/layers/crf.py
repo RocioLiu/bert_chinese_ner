@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import typing
 from typing import List, Optional
 
 
@@ -258,9 +259,10 @@ class CRF(nn.Module):
 
     def _viterbi_decode(self, emissions: torch.FloatTensor,
                         mask: torch.ByteTensor,
-                        pad_tag: Optional[int] = None) -> List[List[int]]:
+                        pad_tag: Optional[int] = None):
         # emissions: (seq_length, batch_size, num_tags)
         # mask: (seq_length, batch_size)
+        # return (batch_size, seq_length)
         assert emissions.dim() == 3 and mask.dim() == 2
         assert emissions.shape[:2] == mask.shape
         assert emissions.size(2) == self.num_tags
@@ -275,13 +277,21 @@ class CRF(nn.Module):
         # Start transition and first emission
         # shape: (batch_size, num_tags)
         score = self.start_transitions + emissions[0]
-        history = []
 
-        # score is a tensor of size (batch_size, num_tags) where for every batch,
+        history_idx = torch.zeros((seq_length, batch_size, self.num_tags),
+                                  dtype=torch.long, device=device)
+        oor_idx = torch.zeros((batch_size, self.num_tags),
+                              dtype=torch.long, device=device)
+        oor_tag = torch.full((seq_length, batch_size), pad_tag,
+                             dtype=torch.long, device=device)
+
+        # score: a tensor of size (batch_size, num_tags) where for every batch,
         # value at column j stores the score of the best tag sequence so far that ends
         # with tag j
-        # history saves where the best tags candidate transitioned from; this is used
-        # when we trace back the best tag sequence
+        # history_idx: it saves where the best tags candidate transitioned from; this
+        # is used when we trace back the best tag sequence
+        # oor_idx: it saves the best tags candidate transitioned from at the positions
+        # where mask is 0, i.e. out of range (oor)
 
         # Viterbi algorithm recursive case: we compute the score of the best tag sequence
         # for every possible next tag
@@ -308,34 +318,38 @@ class CRF(nn.Module):
             # Set score to the next score if this timestep is valid (mask == 1)
             # and save the index that produces the next score
             # shape: (batch_size, num_tags)
-            score = torch.where(mask[i].unsqueeze(1), next_score, score)
-            history.append(indices)
+            score = torch.where(mask[i].unsqueeze(-1), next_score, score)
+            indices = torch.where(mask[i].unsqueeze(-1), indices, oor_idx)
+            history_idx[i - 1] = indices
 
         # End transition score
         # shape: (batch_size, num_tags)
-        score += self.end_transitions
+        end_score = score + self.end_transitions
+        _, end_tag = end_score.max(dim=1)
 
         # Now, compute the best path for each sample
         # shape: (batch_size,)
         seq_ends = mask.long().sum(dim=0) - 1
-        best_tags_list = []
 
-        for idx in range(batch_size):
-            # Find the tag which maximizes the score at the last timestep; this is our best tag
-            # for the last timestep.
-            # We track from the end step first, which we didn't save where its best tag
-            # candidate transitioned from.
-            _, best_last_tag = score[idx].max(dim=0)
-            best_tags = [best_last_tag.item()]
+        ## insert the best tag at each sequence end, which we didn't save where its
+        ## best tag candidate transitioned from. (last position with mask == 1)
 
-            # We trace back where the best last tag comes from, append that to our best tag
-            # sequence, and trace it back again, and so on.
-            for hist in reversed(history[:seq_ends[idx]]):
-                best_last_tag = hist[idx][best_tags[-1]]
-                best_tags.append(best_last_tag.item())
+        # we should exchange the axis 0 and axis 1 of history_idx to let its shape
+        # match the shape of reshaped seq_ends and end_tag (batch_size first)
+        # shape: (batch_size, seq_length, num_tags)
+        history_idx = history_idx.transpose(1, 0).contiguous()
+        history_idx.scatter_(1, seq_ends.view(-1, 1, 1).expand(-1, 1, self.num_tags),
+                             end_tag.view(-1, 1, 1).expand(-1, 1, self.num_tags))
+        history_idx = history_idx.transpose(1, 0).contiguous()
 
-            # Reverse the order because we start from the last timestep
-            best_tags.reverse()
-            best_tags_list.append(best_tags)
+        # The most probable path for each sequence
+        best_tags_arr = torch.zeros((seq_length, batch_size),
+                                    dtype=torch.long, device=device)
+        # The most probable tag at each given word
+        best_tags = torch.zeros(batch_size, 1, dtype=torch.long, device=device)
+        for idx in range(seq_length - 1, -1, -1):
+            best_tags = torch.gather(history_idx[idx], 1, best_tags)
+            # the best tag at that index in the sequence
+            best_tags_arr[idx] = best_tags.view(batch_size)
 
-        return best_tags_list
+        return torch.where(mask, best_tags_arr, oor_tag).transpose(0, 1)

@@ -31,7 +31,7 @@ from ...file_utils import (
 from ...tokenization_utils_base import TOKENIZER_CONFIG_FILE
 from ...tokenization_utils_fast import PreTrainedTokenizerFast
 from ...utils import logging
-from ..encoder_decoder import EncoderDecoderConfig
+from ..encoder_decoder.configuration_encoder_decoder import EncoderDecoderConfig
 from .auto_factory import _LazyAutoMapping
 from .configuration_auto import (
     CONFIG_MAPPING_NAMES,

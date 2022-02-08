@@ -1,29 +1,34 @@
 import os
 import importlib ##
+from typing import List, Optional
 
 import bert_chinese_ner
-from .utils_ner import DataProcessor
-from bert_chinese_ner.processors.utils_ner import DataProcessor, InputExample, InputFeatures
-from bert_chinese_ner import config
+from .utils_ner import DataProcessor, InputExample, InputFeatures
+# from bert_chinese_ner.processors.utils_ner import DataProcessor, InputExample, InputFeatures
 
-importlib.reload(bert_chinese_ner) ##
-importlib.reload(config) ##
+
+# from bert_chinese_ner import ner_config
+from .. import ner_config
+
+# importlib.reload(bert_chinese_ner) ##
+# importlib.reload(ner_config) ##
+
 
 
 class CNerProcessor(DataProcessor):
     """Processor for the chinese ner data set."""
 
-    def get_train_examples(self, data_dir):
+    def get_train_examples(self, data_dir, file_name):
         """Returns the training examples from the data directory."""
-        return self._create_examples(self._read_text(os.path.join(data_dir, "example.train")), "train")
+        return self._create_examples(self._read_text(os.path.join(data_dir, file_name["train"])), "train")
 
-    def get_dev_examples(self, data_dir):
+    def get_dev_examples(self, data_dir, file_name):
         """Gets a collection of [`InputExample`] for the dev set."""
-        return self._create_examples(self._read_text(os.path.join(data_dir, "example.dev")), "dev")
+        return self._create_examples(self._read_text(os.path.join(data_dir, file_name["dev"])), "dev")
 
-    def get_test_examples(self, data_dir):
+    def get_test_examples(self, data_dir, file_name):
         """Gets a collection of [`InputExample`] for the test set."""
-        return self._create_examples(self._read_text(os.path.join(data_dir, "example.test")), "test")
+        return self._create_examples(self._read_text(os.path.join(data_dir, file_name["test"])), "test")
 
     def get_labels(self):
         """Gets the list of labels for this data set."""
@@ -115,5 +120,5 @@ def convert_examples_to_features(
 
 
 
-processor = CNerProcessor()
-examples = processor.get_dev_examples(config.DATA_DIR)
+# processor = CNerProcessor()
+# examples = processor.get_dev_examples(ner_config.DATA_DIR)

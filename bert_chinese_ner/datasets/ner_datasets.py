@@ -10,26 +10,18 @@ from typing import Dict, List, Optional, Union
 import torch
 from torch.utils.data import Dataset
 
-from bert_chinese_ner import config
-from bert_chinese_ner.processors.ner_processor import CNerProcessor, convert_examples_to_features
+# from bert_chinese_ner import ner_config
+from .. import ner_config
+
+# from bert_chinese_ner.processors.ner_processor import CNerProcessor, convert_examples_to_features
+from ..processors.ner_processor import CNerProcessor, convert_examples_to_features
+# from bert_chinese_ner.processors.utils_ner import InputFeatures
+from ..processors.utils_ner import InputFeatures
 
 
 # importlib.reload(bert_chinese_ner) ##
-# importlib.reload(config) ##
+# importlib.reload(ner_config) ##
 
-
-@dataclass
-class TrainingArguments:
-    """
-    Arguments pertaining to what data we are going to input our model for training and eval.
-    Using `HfArgumentParser` we can turn this class into argparse arguments to be able to specify them on the command
-    line.
-    """
-
-    processor = CNerProcessor()
-    tokenizer = config.TOKENIZER
-    data_dir: str = field(default=config.DATA_DIR)
-    max_seq_length: int = field(default=128)
 
 
 class Split(Enum):
@@ -39,17 +31,22 @@ class Split(Enum):
 
 
 class NerDataset(Dataset):
-
-    args: TrainingArguments
-    features: List[InputFeatures]
-
     def __init__(
         self,
-        args: TrainingArguments,
-        mode: Union[str, Split] = Split.train
+        file_name: Dict,
+        processor = CNerProcessor(),
+        tokenizer = ner_config.TOKENIZER,
+        data_dir: str = ner_config.DATA_DIR,
+        mode: Union[str, Split] = Split.train,
+        max_seq_length: int = 128
     ):
-        self.args = args
+
+        self.file_name = file_name
+        self.processor = processor
+        self.tokenizer = tokenizer
+        self.data_dir = data_dir
         self.mode = mode
+        self.max_seq_length = max_seq_length
 
         if isinstance(mode, str):
             try:
@@ -57,24 +54,25 @@ class NerDataset(Dataset):
             except KeyError:
                 raise KeyError("mode is not a valid split name")
 
-        label_list = args.processor.get_labels()
+        label_list = self.processor.get_labels()
 
-        if mode == Split.train:
-            examples = self.processor.get_train_examples(args.data_dir)
-        elif mode == Split.dev:
-            examples = self.processor.get_dev_examples(args.data_dir)
+        if self.mode == Split.train:
+            examples = self.processor.get_train_example(self.data_dir, self.file_name)
+        elif self.mode == Split.dev:
+            examples = self.processor.get_dev_example(self.data_dir, self.file_name)
         else:
-            examples = self.processor.get_test_examples(args.data_dir)
+            examples = self.processor.get_test_example(self.data_dir, self.file_name)
 
-        self.features = convert_examples_to_features(
-            examples,
-            tokenizer=args.tokenizer,
-            label_list=label_list,
-            max_seq_length=args.max_seq_length,
-            pad_on_right=True)
+        self.features = convert_examples_to_features(examples,
+                                                     tokenizer=self.tokenizer,
+                                                     label_list=label_list,
+                                                     max_seq_length=self.max_seq_length,
+                                                     pad_on_right=True)
+
 
     def __len__(self):
         return len(self.features)
+
 
     def __getitem__(self, i) -> Dict[str, torch.Tensor]:
         # Convert to Tensors and build dataset
@@ -93,10 +91,4 @@ class NerDataset(Dataset):
         }
 
         return inputs
-
-
-
-
-
-
 

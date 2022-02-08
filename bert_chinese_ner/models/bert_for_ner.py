@@ -8,6 +8,8 @@ from bert_chinese_ner.models.transformers.models.bert.modeling_bert import BertP
 from bert_chinese_ner.models.layers.crf import CRF
 
 from bert_chinese_ner.models.transformers.models.bert.configuration_bert import BertConfig
+from .transformers.models.bert.configuration_bert import BertConfig
+
 config = BertConfig.from_pretrained("bert-base-uncased", author="DogeCheng")
 print(config)
 

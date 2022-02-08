@@ -1,16 +1,20 @@
 import torch
 from torch.utils.data import DataLoader
 
-# from bert_chinese_ner.datasets.ner_datasets import NerDataset
+from bert_chinese_ner.datasets.ner_datasets import NerDataset
 from .datasets.ner_datasets import NerDataset
 
-# from bert_chinese_ner import ner_config
+from bert_chinese_ner import ner_config
 from .bert_chinese_ner import ner_config
+
+import importlib
+import bert_chinese_ner
+importlib.reload(bert_chinese_ner)
 
 
 MODEL_CLASSES = {
     ## bert ernie bert_wwm bert_wwwm_ext
-    'bert': (BertConfig, BertSoftmaxForNer, CNerTokenizer),
+    'bert': (BertConfig, BertCrfForNer, CNerTokenizer),
     'albert': (AlbertConfig, AlbertSoftmaxForNer, CNerTokenizer),
 }
 
@@ -22,10 +26,18 @@ tokenizer = tokenizer_class.from_pretrained(args.tokenizer_name if args.tokenize
 
 FILE_NAME = {"train":ner_config.TRAINING_FILE, "dev":ner_config.DEV_FILE, "test":ner_config.TEST_FILE}
 
-train_dataset = NerDataset()
 
 
-train_dataloader = DataLoader(train_dataset, batch_size=TRAIN_BATCH_SIZE,
+train_dataset = NerDataset(file_name=FILE_NAME, mode="train")
+train_dataset[0]['input_ids']
+
+dev_dataset = NerDataset(file_name=FILE_NAME, mode="dev")
+len(dev_dataset)
+
+test_dataset = NerDataset(file_name=FILE_NAME, mode="test")
+
+
+train_dataloader = DataLoader(train_dataset, batch_size=ner_config.TRAIN_BATCH_SIZE,
                               shuffle=True, drop_last=True)
-valid_dataloader = DataLoader(valid_dataset, batch_size=VALID_BATCH_SIZE,
+dev_dataloader = DataLoader(dev_dataset, batch_size=ner_config.DEV_BATCH_SIZE,
                               shuffle=True, drop_last=True)

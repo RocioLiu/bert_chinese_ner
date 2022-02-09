@@ -119,6 +119,20 @@ def convert_examples_to_features(
     return features
 
 
+def collate_fn(batch):
+    """
+    Transform the shape of batch data from (batch_size, seq_len) to (seq_len, batch_szie)
+    batch:
+    :return:
+    """
+    all_input_ids, all_attention_mask, all_token_type_ids, all_labels = map(torch.stack, zip(*batch))
+    all_input_ids = all_input_ids.transpose(0,1)
+    all_attention_mask = all_attention_mask.transpose(0, 1)
+    all_token_type_ids = all_token_type_ids.transpose(0, 1)
+    all_labels = all_labels.transpose(0, 1)
+
+    return all_input_ids, all_attention_mask, all_token_type_ids, all_labels
+
 
 # processor = CNerProcessor()
 # examples = processor.get_dev_examples(ner_config.DATA_DIR)

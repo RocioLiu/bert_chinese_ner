@@ -1,5 +1,6 @@
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
+from torch.utils.data.distributed import DistributedSampler
 
 from bert_chinese_ner.datasets.ner_datasets import NerDataset
 from .datasets.ner_datasets import NerDataset
@@ -30,6 +31,7 @@ FILE_NAME = {"train":ner_config.TRAINING_FILE, "dev":ner_config.DEV_FILE, "test"
 
 train_dataset = NerDataset(file_name=FILE_NAME, mode="train")
 len(train_dataset) #20864
+train_dataset[0]
 
 dev_dataset = NerDataset(file_name=FILE_NAME, mode="dev")
 len(dev_dataset) #2318
@@ -38,6 +40,8 @@ test_dataset = NerDataset(file_name=FILE_NAME, mode="test")
 len(test_dataset) #4636
 
 
+# DistributedSampler(train_dataset)
+# train_sampler = RandomSampler(train_dataset)
 train_dataloader = DataLoader(train_dataset, batch_size=ner_config.TRAIN_BATCH_SIZE,
                               shuffle=True, drop_last=True)
 

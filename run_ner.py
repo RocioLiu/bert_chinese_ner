@@ -5,6 +5,8 @@ from torch.utils.data.distributed import DistributedSampler
 from bert_chinese_ner.datasets.ner_datasets import NerDataset
 from .datasets.ner_datasets import NerDataset
 
+from bert_chinese_ner.processors.ner_processor import collate_fn
+
 from bert_chinese_ner import ner_config
 from .bert_chinese_ner import ner_config
 

@@ -121,9 +121,7 @@ def convert_examples_to_features(
 
 def collate_fn(batch):
     """
-    Transform the shape of batch data from (batch_size, seq_len) to (seq_len, batch_szie)
-    batch:
-    :return:
+    Transform the shape of batch data from (batch_size, seq_len) to (seq_len, batch_szie).
     """
     all_input_ids, all_attention_mask, all_token_type_ids, all_labels = map(torch.stack, zip(*batch))
     all_input_ids = all_input_ids.transpose(0,1)

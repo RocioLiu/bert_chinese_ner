@@ -10,6 +10,7 @@ from .bert_chinese_ner import ner_config
 import importlib
 import bert_chinese_ner
 importlib.reload(bert_chinese_ner)
+importlib.reload(ner_config)
 
 
 MODEL_CLASSES = {
@@ -27,17 +28,18 @@ tokenizer = tokenizer_class.from_pretrained(args.tokenizer_name if args.tokenize
 FILE_NAME = {"train":ner_config.TRAINING_FILE, "dev":ner_config.DEV_FILE, "test":ner_config.TEST_FILE}
 
 
-
 train_dataset = NerDataset(file_name=FILE_NAME, mode="train")
-train_dataset[0]['input_ids']
+len(train_dataset) #20864
 
 dev_dataset = NerDataset(file_name=FILE_NAME, mode="dev")
-len(dev_dataset)
+len(dev_dataset) #2318
 
 test_dataset = NerDataset(file_name=FILE_NAME, mode="test")
+len(test_dataset) #4636
 
 
 train_dataloader = DataLoader(train_dataset, batch_size=ner_config.TRAIN_BATCH_SIZE,
                               shuffle=True, drop_last=True)
+
 dev_dataloader = DataLoader(dev_dataset, batch_size=ner_config.DEV_BATCH_SIZE,
                               shuffle=True, drop_last=True)

@@ -148,9 +148,9 @@ class CRF(nn.Module):
         if emissions.dim() != 3:
             raise ValueError(
                 f"emissions must have dimension of 3, got {emissions.dim()}")
-        if emissions.size(2) != self.num_tag:
+        if emissions.size(2) != self.num_tags:
             raise ValueError(
-                f"expected last dimension of emissions is {self.num_tag}, "
+                f"expected last dimension of emissions is {self.num_tags}, "
                 f"got {emissions.size(2)}"
             )
 

@@ -15,13 +15,12 @@ from .. import ner_config
 
 from bert_chinese_ner.processors.ner_processor import CNerProcessor, convert_examples_to_features
 from ..processors.ner_processor import CNerProcessor, convert_examples_to_features
-# from bert_chinese_ner.processors.utils_ner import InputFeatures
+from bert_chinese_ner.processors.utils_ner import InputFeatures
 from ..processors.utils_ner import InputFeatures
 
 
-importlib.reload(bert_chinese_ner) ##
-importlib.reload(ner_config) ##
-
+# importlib.reload(bert_chinese_ner) ##
+# importlib.reload(ner_config) ##
 
 
 class Split(Enum):
@@ -37,7 +36,8 @@ class NerDataset(Dataset):
         processor = CNerProcessor(),
         tokenizer = ner_config.TOKENIZER,
         data_dir: str = ner_config.DATA_DIR,
-        mode: Union[str, Split] = Split.train,
+
+        mode: Union[str, Split] = Split.train.value,
         max_seq_length: int = ner_config.MAX_LEN
     ):
 
@@ -56,9 +56,9 @@ class NerDataset(Dataset):
 
         label_list = self.processor.get_labels()
 
-        if self.mode == Split.train:
+        if self.mode == Split.train.value:
             examples = self.processor.get_train_examples(self.data_dir, self.file_name)
-        elif self.mode == Split.dev:
+        elif self.mode == Split.dev.value:
             examples = self.processor.get_dev_examples(self.data_dir, self.file_name)
         else:
             examples = self.processor.get_test_examples(self.data_dir, self.file_name)
@@ -93,28 +93,6 @@ class NerDataset(Dataset):
         return inputs
 
 
-data_dir = ner_config.DATA_DIR
-file_name = FILE_NAME
-
-# train
-examples = processor.get_train_examples(data_dir, file_name)
-len(examples)
-examples[0]
-label_list = processor.get_labels()
-
-features = convert_examples_to_features(examples,
-                                        tokenizer=ner_config.TOKENIZER,
-                                        label_list=label_list,
-                                        max_seq_length=ner_config.MAX_LEN,
-                                        pad_on_right=True)
-
-len(features) # 20864
-features[0].input_ids
-features[-1].input_ids
-
-# dev
-examples = processor.get_dev_examples(data_dir, file_name)
-len(examples)
 
 
 

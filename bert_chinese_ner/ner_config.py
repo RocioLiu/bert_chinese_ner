@@ -1,7 +1,7 @@
 # import transformers
 from os.path import abspath, dirname, split, join
 
-from bert_chinese_ner.models.transformers.models.bert.tokenization_bert import BertTokenizer
+# from bert_chinese_ner.models.transformers.models.bert.tokenization_bert import BertTokenizer
 from .models.transformers.models.bert.tokenization_bert import BertTokenizer
 
 
@@ -15,13 +15,15 @@ DEV_FILE = "example.dev"
 TEST_FILE = "example.test"
 
 TRAIN_BATCH_SIZE = 64
-DEV_BATCH_SIZE = 16
+DEV_BATCH_SIZE = 8
+TEST_BATCH_SIZE = 16
+
+MAX_LEN = 128
 
 BASE_MODEL_NAME = "bert-base-chinese"
 VOCAB_FILE = join("data", BASE_MODEL_NAME, "vocab.txt")
+LABELS = ['B-LOC', 'B-ORG', 'B-PER', 'I-LOC', 'I-ORG', 'I-PER', 'O']
 
-
-MAX_LEN = 128
 
 TOKENIZER = BertTokenizer.from_pretrained(
     BASE_MODEL_NAME,

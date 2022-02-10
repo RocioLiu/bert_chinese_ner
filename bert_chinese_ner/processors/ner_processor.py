@@ -1,5 +1,6 @@
 import os
 import importlib ##
+import torch
 from typing import List, Optional
 
 import bert_chinese_ner
@@ -58,7 +59,7 @@ def convert_examples_to_features(
         tokenizer=None,
         label_list=None,
         max_seq_length: Optional[int] = None,
-        pad_on_right=True):
+        pad_on_right=True) -> List[InputFeatures]:
     """ Loads a data file into a list of `InputBatch`s
 
         Args:
@@ -118,18 +119,6 @@ def convert_examples_to_features(
 
     return features
 
-
-def collate_fn(batch):
-    """
-    Transform the shape of batch data from (batch_size, seq_len) to (seq_len, batch_szie).
-    """
-    all_input_ids, all_attention_mask, all_token_type_ids, all_labels = map(torch.stack, zip(*batch))
-    all_input_ids = all_input_ids.transpose(0,1)
-    all_attention_mask = all_attention_mask.transpose(0, 1)
-    all_token_type_ids = all_token_type_ids.transpose(0, 1)
-    all_labels = all_labels.transpose(0, 1)
-
-    return all_input_ids, all_attention_mask, all_token_type_ids, all_labels
 
 
 # processor = CNerProcessor()

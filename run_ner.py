@@ -16,6 +16,8 @@ importlib.reload(bert_chinese_ner)
 importlib.reload(ner_config)
 
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 MODEL_CLASSES = {
     ## bert ernie bert_wwm bert_wwwm_ext
     'bert': (BertConfig, BertCrfForNer, CNerTokenizer),
@@ -47,5 +49,8 @@ len(test_dataset) #4636
 train_dataloader = DataLoader(train_dataset, batch_size=ner_config.TRAIN_BATCH_SIZE,
                               shuffle=True, drop_last=True)
 
+train_dataloader = DataLoader(train_dataset, batch_size=ner_config.TRAIN_BATCH_SIZE,
+                              shuffle=True, drop_last=True, collate_fn=collate_fn)
+
 dev_dataloader = DataLoader(dev_dataset, batch_size=ner_config.DEV_BATCH_SIZE,
-                              shuffle=True, drop_last=True)
+                              shuffle=True, drop_last=True, collate_fn=collate_fn)

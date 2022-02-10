@@ -63,6 +63,7 @@ class NerDataset(Dataset):
         else:
             examples = self.processor.get_test_examples(self.data_dir, self.file_name)
 
+        # self.features: List[InputFeatures]
         self.features = convert_examples_to_features(examples,
                                                      tokenizer=self.tokenizer,
                                                      label_list=label_list,
@@ -91,8 +92,4 @@ class NerDataset(Dataset):
         }
 
         return inputs
-
-
-
-
 

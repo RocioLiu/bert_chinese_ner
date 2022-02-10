@@ -57,39 +57,3 @@ class BertCrfForNer(BertPreTrainedModel):
 
         return outputs
 
-
-
-input_ids = aa['input_ids']
-attention_mask = aa['attention_mask']
-token_type_ids = aa['token_type_ids']
-label_ids = aa['label_ids']
-
-input_ids.shape # (batch_size, max_len) = (64, 128)
-num_tags = len(ner_config.LABELS)
-
-
-
-config = BertConfig.from_pretrained(ner_config.BASE_MODEL_NAME)
-print(config)
-
-bert = BertModel(config)
-dropout = nn.Dropout(config.hidden_dropout_prob)
-classifier = nn.Linear(config.hidden_size, num_tags)
-crf = CRF(num_tags, batch_first=True)
-
-
-# --
-bert_outputs = bert(input_ids=input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
-type(bert_outputs)
-bert_outputs[0].shape
-
-sequence_output = bert_outputs[0]
-sequence_output = dropout(sequence_output)
-print(sequence_output.shape) # (64, 128, 768)
-
-logits = classifier(sequence_output)
-print(logits.shape) # (64, 128, 7)
-
-outputs = (logits, )
-loss = crf(emissions = logits, tags=label_ids, mask=attention_mask)
-outputs = (-1*loss, ) + outputs

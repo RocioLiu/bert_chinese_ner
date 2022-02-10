@@ -2,13 +2,14 @@ import torch
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
 from torch.utils.data.distributed import DistributedSampler
 
+from bert_chinese_ner import ner_config
+from .bert_chinese_ner import ner_config
+
 from bert_chinese_ner.datasets.ner_datasets import NerDataset
 from .datasets.ner_datasets import NerDataset
 
-from bert_chinese_ner.processors.ner_processor import collate_fn
-
-from bert_chinese_ner import ner_config
-from .bert_chinese_ner import ner_config
+from bert_chinese_ner.models.transformers.models.bert.configuration_bert import BertConfig
+from .transformers.models.bert.configuration_bert import BertConfig
 
 import importlib
 import bert_chinese_ner
@@ -23,6 +24,10 @@ MODEL_CLASSES = {
     'bert': (BertConfig, BertCrfForNer, CNerTokenizer),
     'albert': (AlbertConfig, AlbertSoftmaxForNer, CNerTokenizer),
 }
+
+## hparams of BertCrfForNer class
+config = BertConfig.from_pretrained(ner_config.BASE_MODEL_NAME)
+num_tags = len(ner_config.LABELS)
 
 
 tokenizer = tokenizer_class.from_pretrained(args.tokenizer_name if args.tokenizer_name else args.model_name_or_path,
@@ -49,8 +54,8 @@ len(test_dataset) #4636
 train_dataloader = DataLoader(train_dataset, batch_size=ner_config.TRAIN_BATCH_SIZE,
                               shuffle=True, drop_last=True)
 
-train_dataloader = DataLoader(train_dataset, batch_size=ner_config.TRAIN_BATCH_SIZE,
-                              shuffle=True, drop_last=True, collate_fn=collate_fn)
-
 dev_dataloader = DataLoader(dev_dataset, batch_size=ner_config.DEV_BATCH_SIZE,
-                              shuffle=True, drop_last=True, collate_fn=collate_fn)
+                            shuffle=True, drop_last=True)
+
+test_dataloader = DataLoader(test_dataset, batch_size=ner_config.TEST_BATCH_SIZE,
+                            shuffle=True, drop_last=True)

@@ -8,8 +8,6 @@ from bert_chinese_ner.models.transformers.models.bert.modeling_bert import BertP
 from bert_chinese_ner.models.layers.crf import CRF
 from .layers.crf import CRF
 
-from bert_chinese_ner.models.transformers.models.bert.configuration_bert import BertConfig
-from .transformers.models.bert.configuration_bert import BertConfig
 
 from bert_chinese_ner import ner_config
 from .. import ner_config
@@ -41,19 +39,20 @@ class BertCrfForNer(BertPreTrainedModel):
             input_lens:
         return:
         """
-        # (pooler) shape: (768,)
-        # outputs: class BaseModelOutputWithPoolingAndCrossAttentions
+        # input: input_ids.shape: [max_seq_len, batch_size]
+        # bert_outputs: class BaseModelOutputWithPoolingAndCrossAttentions
         bert_outputs = self.bert(input_ids=input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
-        # sequence_output: [*input_ids, 768] = [batch_size, max_seq_len, 768]
+        # sequence_output: [*input_ids, 768] = [max_seq_len, batch_size, 768]
         sequence_output = bert_outputs[0]
         sequence_output = self.dropout(sequence_output)
         logits = self.classifier(sequence_output)
         outputs = (logits, )
         if label_ids is not None:
-            # logits: (seq_length, batch_size, num_tags)
+            # logits: (max_seq_length, batch_size, num_tags)
             loss = self.crf(emissions = logits, tags=label_ids, mask=attention_mask)
             # loss, scores
             outputs = (-1*loss, ) + outputs
 
         return outputs
+
 

@@ -74,13 +74,14 @@ class CRF(nn.Module):
         if mask.dtype != torch.uint8:
             mask = mask.byte()  # self.byte() is equivalent to self.to(torch.uint8)
 
-        self._validate(emissions, tags=tags, mask=mask)
-
         if self.batch_first:
             # exchange dim 0 with dim 1, it's the same as emissions.transpose(1, 0)
             emissions = emissions.transpose(0, 1)
             tags = tags.transpose(0, 1)
             mask = mask.transpose(0, 1)
+
+        self._validate(emissions, tags=tags, mask=mask)
+
 
         # shape: (batch_size,)
         numerator = self._compute_score(emissions, tags, mask)
@@ -169,10 +170,15 @@ class CRF(nn.Module):
                 )
             # .all() tests if all elements evaluate to True.
             # take batch_size number first element of a seq (first timestep)
-            no_empty_seq = not self.batch_first and mask[0].all()
-            no_empty_seq_bf = self.batch_first and mask[:, 0].all()
-            if not no_empty_seq and not no_empty_seq_bf:
+            no_empty_seq = mask[0, :].all() if self.batch_first == False else mask[:, 0].all()
+            if not no_empty_seq:
                 raise ValueError("mask of the first timestep must all be on")
+            # no_empty_seq = not self.batch_first and mask[0].all().item()
+            # print(f"no_empty_seq: {no_empty_seq}")
+            # no_empty_seq_bf = self.batch_first and mask[:, 0].all().item()
+            # print(f"no_empty_seq_bf: {no_empty_seq_bf}")
+            # if not no_empty_seq and not no_empty_seq_bf:
+            #     raise ValueError("mask of the first timestep must all be on")
 
     def _compute_score(
             self,
@@ -180,14 +186,13 @@ class CRF(nn.Module):
             tags: torch.LongTensor,
             mask: torch.ByteTensor
     ) -> torch.Tensor:
-        # emissions: (seq_length, batch_size, num_tags)
+        # emissions: (seq_length, batch_size, num_tags) if batch_first == False
         # tags: (seq_length, batch_size)
         # mask: (seq_length, batch_size)
         assert emissions.dim() == 3 and tags.dim() == 2
         assert emissions.shape[:2] == tags.shape
         assert emissions.size(2) == self.num_tags
         assert mask.shape == tags.shape
-        assert mask[0].all()
 
         seq_length, batch_size = tags.shape
         mask = mask.float()
@@ -223,7 +228,6 @@ class CRF(nn.Module):
         assert emissions.dim() == 3 and mask.dim() == 2
         assert emissions.shape[:2] == mask.shape
         assert emissions.size(2) == self.num_tags
-        assert mask[0].all()
 
         seq_length = emissions.size(0)
 

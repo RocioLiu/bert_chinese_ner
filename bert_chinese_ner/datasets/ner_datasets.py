@@ -19,9 +19,6 @@ from bert_chinese_ner.processors.utils_ner import InputFeatures
 from ..processors.utils_ner import InputFeatures
 
 
-# importlib.reload(bert_chinese_ner) ##
-# importlib.reload(ner_config) ##
-
 
 class Split(Enum):
     train = "train"

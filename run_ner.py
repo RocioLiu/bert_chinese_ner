@@ -1,6 +1,9 @@
+from tqdm import tqdm
+
 import torch
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
 from torch.utils.data.distributed import DistributedSampler
+
 
 from bert_chinese_ner import ner_config
 from .bert_chinese_ner import ner_config
@@ -10,6 +13,9 @@ from .datasets.ner_datasets import NerDataset
 
 from bert_chinese_ner.models.transformers.models.bert.configuration_bert import BertConfig
 from .transformers.models.bert.configuration_bert import BertConfig
+
+from bert_chinese_ner.models.bert_for_ner import BertCrfForNer
+from .models.bert_for_ner import BertCrfForNer
 
 import importlib
 import bert_chinese_ner
@@ -24,6 +30,23 @@ MODEL_CLASSES = {
     'bert': (BertConfig, BertCrfForNer, CNerTokenizer),
     'albert': (AlbertConfig, AlbertSoftmaxForNer, CNerTokenizer),
 }
+
+
+def train_fn(data_loader, model, optimizer, scheduler, device):
+    model.train()
+    total_loss = 0
+    # get a batch of data dict
+    for data in tqdm(data_loader, total=len(data_loader)):
+        for k, v in data.items():
+            data[k] = v.transpose(0, 1).to(device)
+        optimizer.zero_grad()
+        loss, outputs = model(**data)
+        loss.backward()
+        optimizer.step()
+        scheduler.step()
+        total_loss += loss.item()
+    return total_loss / len(data_loader) # avg loss per batch
+
 
 ## hparams of BertCrfForNer class
 config = BertConfig.from_pretrained(ner_config.BASE_MODEL_NAME)

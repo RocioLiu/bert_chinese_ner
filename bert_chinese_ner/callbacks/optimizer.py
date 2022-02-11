@@ -2,6 +2,7 @@ import math
 from typing import Callable, Iterable, Tuple
 
 import torch
+from torch import nn
 from torch.optim.optimizer import Optimizer
 
 class AdamW(Optimizer):

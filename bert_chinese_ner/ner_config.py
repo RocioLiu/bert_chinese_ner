@@ -14,6 +14,8 @@ TRAINING_FILE = "example.train"
 DEV_FILE = "example.dev"
 TEST_FILE = "example.test"
 
+EPOCHS = 3
+
 TRAIN_BATCH_SIZE = 64
 DEV_BATCH_SIZE = 8
 TEST_BATCH_SIZE = 16
@@ -29,3 +31,9 @@ TOKENIZER = BertTokenizer.from_pretrained(
     BASE_MODEL_NAME,
     do_lower_case=False
 )
+
+WEIGHT_DECAY = 0.01
+LEARNING_RATE = 3e-5
+CRF_LEARNING_RATE = 3e-5
+
+WARMUP_PROPORTION = 0.1

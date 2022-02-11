@@ -1,5 +1,5 @@
 import torch
-import torch.nn as nn
+from torch import nn
 from typing import Optional
 
 
@@ -261,7 +261,7 @@ class CRF(nn.Module):
 
             # Set score to the next score if this timestep is valid (mask == 1)
             # shape: (batch_size, num_tags)
-            score = torch.where(mask[i].unsqueeze(1), next_score, score)
+            score = torch.where(mask[i].unsqueeze(1).bool(), next_score, score)
 
         # End transition score
         # shape: (batch_size, num_tags)

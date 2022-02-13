@@ -15,9 +15,9 @@ from .. import ner_config
 
 
 class BertCrfForNer(BertPreTrainedModel):
-    def __init__(self, config, num_tags):
+    def __init__(self, pretrained_model_name, config, num_tags):
         super(BertCrfForNer, self).__init__(config)
-        self.bert = BertModel(config)
+        self.bert = BertModel.from_pretrained(pretrained_model_name)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
         self.classifier = nn.Linear(config.hidden_size, num_tags)
         self.crf = CRF(num_tags=num_tags, batch_first=True)
@@ -41,22 +41,29 @@ class BertCrfForNer(BertPreTrainedModel):
         """
         # input: input_ids.shape: [max_seq_len, batch_size]
         # bert_outputs: class BaseModelOutputWithPoolingAndCrossAttentions
+        # o1: last_hidden_state (ie. sequence output)
+        # o2: pooler_output
         bert_outputs = self.bert(input_ids=input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
         # sequence_output: [*input_ids, 768] = [max_seq_len, batch_size, 768]
         sequence_output = bert_outputs[0]
         sequence_output = self.dropout(sequence_output)
         logits = self.classifier(sequence_output)
-        outputs = (logits, )
+        # outputs = (logits, )
         if label_ids is not None:
             # logits: (max_seq_length, batch_size, num_tags)
-            loss = self.crf(emissions = logits, tags=label_ids, mask=attention_mask)
+            loss = -1 * self.crf(emissions = logits, tags=label_ids, mask=attention_mask)
+            outputs = logits, loss  # emissions, loss
+        else:
+            outputs = logits
 
-        return -1*loss, outputs
+        return outputs
 
 
 ## ---
-
-# bert = BertModel(config)
+# config = BertConfig.from_pretrained(ner_config.BASE_MODEL_NAME)
+# num_tags = len(ner_config.LABELS)
+#
+# bert = BertModel.from_pretrained(ner_config.BASE_MODEL_NAME)
 # dropout = nn.Dropout(config.hidden_dropout_prob)
 # classifier = nn.Linear(config.hidden_size, num_tags)
 # crf = CRF(num_tags=num_tags, batch_first=True)
@@ -72,15 +79,21 @@ class BertCrfForNer(BertPreTrainedModel):
 #
 #
 # bert_outputs = bert(input_ids=input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
-# sequence_output = bert_outputs[0]
+# # o1, o2 = bert(input_ids=input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
+#
+# sequence_output = bert_outputs[0] # torch.Size([128, 64, 768])
+# pooler_output = bert_outputs[1] # torch.Size([128, 768])
 # sequence_output.shape # torch.Size([128, 64, 768])
 # sequence_output = dropout(sequence_output)
 # logits = classifier(sequence_output)
 # logits.shape # torch.Size([128, 64, 7])
-# outputs = (logits, )
+# # outputs = (logits, )
 #
-# attention_mask.shape
+# # attention_mask.shape
 # loss = crf(emissions = logits, tags=label_ids, mask=attention_mask)
+#
+# ww = logits, loss
+# ee = outputs + (_, loss)
 
 
 

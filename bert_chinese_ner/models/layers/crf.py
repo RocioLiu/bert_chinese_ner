@@ -128,11 +128,12 @@ class CRF(nn.Module):
                                       device=emissions.device)
         if mask.dtype != torch.uint8:
             mask = mask.byte()
-        self._validate(emissions, mask=mask)
 
         if self.batch_first:
             emissions = emissions.transpose(0, 1)
             mask = mask.transpose(0, 1)
+
+        self._validate(emissions, mask=mask)
 
         if nbest == 1:
             # (1, batch_size, seq_length)
@@ -170,7 +171,8 @@ class CRF(nn.Module):
                 )
             # .all() tests if all elements evaluate to True.
             # take batch_size number first element of a seq (first timestep)
-            no_empty_seq = mask[0, :].all() if self.batch_first == False else mask[:, 0].all()
+            no_empty_seq = mask[0, :].all() if (self.batch_first == False) else mask[:, 0].all()
+            print(f"batch_first: {self.batch_first}. no_empty_seq: {no_empty_seq}")
             if not no_empty_seq:
                 raise ValueError("mask of the first timestep must all be on")
             # no_empty_seq = not self.batch_first and mask[0].all().item()
@@ -277,10 +279,6 @@ class CRF(nn.Module):
         # emissions: (seq_length, batch_size, num_tags)
         # mask: (seq_length, batch_size)
         # return (batch_size, seq_length)
-        assert emissions.dim() == 3 and mask.dim() == 2
-        assert emissions.shape[:2] == mask.shape
-        assert emissions.size(2) == self.num_tags
-        assert mask[0].all()
 
         if pad_tag is None:
             pad_tag = 0

@@ -65,11 +65,11 @@ def convert_examples_to_features(
         Args:
             pad_on_right: Default to True. Padding the sequence on the right hand side.
     """
-    label_map = {label: i for i, label in enumerate(label_list)}
+    label_to_id = {label: i for i, label in enumerate(label_list)}
     features = []
     for idx, example in enumerate(examples):
         tokens = example.text
-        label_ids = [label_map[l] for l in example.label]
+        label_ids = [label_to_id[l] for l in example.label]
         # Account for [CLS] and [SEP] with "- 2".
         tokens = tokens[:max_seq_length - 2]
         label_ids = label_ids[:max_seq_length - 2]
@@ -80,7 +80,8 @@ def convert_examples_to_features(
         label_ids = [0] + label_ids + [0]
 
         # attention mask
-        # only the real token with value 1 are attends to, and pads tokens with 0.
+        # only the real token with value 1 are attends to, and the other
+        # positions pads with 0.
         mask = [1] * len(input_ids)
 
         # Segment the two sequences

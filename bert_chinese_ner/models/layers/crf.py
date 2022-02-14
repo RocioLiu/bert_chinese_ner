@@ -74,13 +74,17 @@ class CRF(nn.Module):
         if mask.dtype != torch.uint8:
             mask = mask.byte()  # self.byte() is equivalent to self.to(torch.uint8)
 
+        self._validate(emissions, tags=tags, mask=mask)
+
         if self.batch_first:
             # exchange dim 0 with dim 1, it's the same as emissions.transpose(1, 0)
+            # if the input data is batch_first, transforms its shape to
+            # (seq_length, batch_size, num_tags)
             emissions = emissions.transpose(0, 1)
+            # (seq_length, batch_size)
             tags = tags.transpose(0, 1)
+            # (seq_length, batch_size)
             mask = mask.transpose(0, 1)
-
-        self._validate(emissions, tags=tags, mask=mask)
 
 
         # shape: (batch_size,)
@@ -129,11 +133,11 @@ class CRF(nn.Module):
         if mask.dtype != torch.uint8:
             mask = mask.byte()
 
+        self._validate(emissions, mask=mask)
+
         if self.batch_first:
             emissions = emissions.transpose(0, 1)
             mask = mask.transpose(0, 1)
-
-        self._validate(emissions, mask=mask)
 
         if nbest == 1:
             # (1, batch_size, seq_length)
@@ -188,7 +192,7 @@ class CRF(nn.Module):
             tags: torch.LongTensor,
             mask: torch.ByteTensor
     ) -> torch.Tensor:
-        # emissions: (seq_length, batch_size, num_tags) if batch_first == False
+        # emissions: (seq_length, batch_size, num_tags)
         # tags: (seq_length, batch_size)
         # mask: (seq_length, batch_size)
         assert emissions.dim() == 3 and tags.dim() == 2
@@ -200,11 +204,12 @@ class CRF(nn.Module):
         mask = mask.float()
 
         # Start transition score and first emission
-        # shape: (batch_size,)
+        # shape: (batch_size,) the first element in a seq for each example of a batch
         score = self.start_transitions[tags[0]]
         score += emissions[0, torch.arange(batch_size), tags[0]]
 
         for i in range(1, seq_length):
+            # we only want to get the active score (i.e. mask[i] == 1)
             # Transition score to next tag, only added if next timestep is valid (mask == 1)
             # shape: (batch_size,)
             score += self.transitions[tags[i - 1], tags[i]] * mask[i]
@@ -214,8 +219,9 @@ class CRF(nn.Module):
             score += emissions[i, torch.arange(batch_size), tags[i]] * mask[i]
 
         # End transition score
-        # shape: (batch_size,)
+        # shape: (seq_len, batch_size) -> (batch_size,)
         seq_ends = mask.long().sum(dim=0) - 1
+        # last tag of each example in a batch
         # shape: (batch_size,)
         last_tags = tags[seq_ends, torch.arange(batch_size)]
         # shape: (batch_size,)
@@ -276,18 +282,20 @@ class CRF(nn.Module):
     def _viterbi_decode(self, emissions: torch.FloatTensor,
                         mask: torch.ByteTensor,
                         pad_tag: Optional[int] = None) -> torch.Tensor:
-        # emissions: (seq_length, batch_size, num_tags)
-        # mask: (seq_length, batch_size)
-        # return (batch_size, seq_length)
+        # emissions: (seq_length, batch_size, num_tags) if batch_first == False
+        # mask: (seq_length, batch_size) if batch_first == False
+        # return (batch_size, seq_length) if batch_first == False
 
         if pad_tag is None:
             pad_tag = 0
 
         device = emissions.device
+
         seq_length, batch_size = mask.shape
 
         # Start transition and first emission
-        # shape: (batch_size, num_tags)
+        # shape: (batch_size, num_tags) if batch_first == False
+        # (seq_len, num_tags) if batch_first == True
         score = self.start_transitions + emissions[0]
 
         history_idx = torch.zeros((seq_length, batch_size, self.num_tags),
@@ -323,8 +331,9 @@ class CRF(nn.Module):
             next_score = broadcast_score + self.transitions + broadcast_emission
 
             # Find the maximum score over all possible current tag
-            # shape: (batch_size, num_tags)
+            # next_score.shape: (batch_size, num_tags)
             # indices is the tag at last timestep which maximize the score at this timestep
+            # indices.shape: (batch_size, num_tags)
             next_score, indices = next_score.max(dim=1)
 
             # Set score to the next score if this timestep is valid (mask == 1)
@@ -364,6 +373,7 @@ class CRF(nn.Module):
             # the best tag at that index in the sequence
             best_tags_arr[idx] = best_tags.view(batch_size)
 
+        # (batch_size, seq_len)
         return torch.where(mask, best_tags_arr, oor_tag).transpose(0, 1)
 
     def _viterbi_decode_nbest(self, emissions: torch.FloatTensor,

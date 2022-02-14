@@ -14,13 +14,14 @@ TRAINING_FILE = "example.train"
 DEV_FILE = "example.dev"
 TEST_FILE = "example.test"
 
-EPOCHS = 3
+EPOCHS = 5
+PRINT_EVERY_N_STEP = 50
 
 TRAIN_BATCH_SIZE = 64
-DEV_BATCH_SIZE = 8
-TEST_BATCH_SIZE = 16
+DEV_BATCH_SIZE = 16
+TEST_BATCH_SIZE = 32
 
-MAX_LEN = 128
+MAX_LEN = 256
 
 BASE_MODEL_NAME = "bert-base-chinese"
 VOCAB_FILE = join("data", BASE_MODEL_NAME, "vocab.txt")

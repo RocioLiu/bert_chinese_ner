@@ -11,7 +11,7 @@ from bert_chinese_ner.processors.ner_processor import CNerProcessor
 from bert_chinese_ner.models.bert_for_ner import BertCrfForNer
 from bert_chinese_ner.callbacks.optimizer import AdamW
 from bert_chinese_ner.callbacks.lr_scheduler import get_linear_schedule_with_warmup
-from bert_chinese_ner.metrics.ner_metrics import
+from bert_chinese_ner.metrics.ner_metrics import f1_score_func
 from bert_chinese_ner.models.transformers.models.bert.configuration_bert import BertConfig
 
 import importlib
@@ -51,7 +51,6 @@ def train_fn(data_loader, model, optimizer, scheduler, device):
 
 
 def eval_fn(data_loader, model, device):
-    metric = SeqEntityScore(id_to_label) # !!!
 
     model.eval()
     total_loss = 0
@@ -66,31 +65,9 @@ def eval_fn(data_loader, model, device):
 
         total_loss += loss.item()
 
-        y_true_flat = data['label_ids'].cpu().numpy().tolist()
-        y_pred_flat = pred_tags.squeeze(0).cpu().numpy().tolist()
-        # (batch_size, seq_len)
-        mask = data['attention_mask'] #
-        seq_ends = (mask.sum(dim=1) - 1).tolist() #
-        y_true_flat
-
-
-        # 02-14
-        for i, labels in enumerate(label_ids_flat):
-            print(i)
-            temp_1, temp_2 = [], []
-            for j, label_j in enumerate(labels):
-                # jth label in a seq
-                if j == 0:
-                    continue
-                elif j == seq_ends[i]:
-                    metric.update(pred_paths=[temp_2], label_paths=[temp_1])
-                    break
-                else:
-                    temp_1.append(id_to_label[label_ids_flat[i][j]])
-                    temp_2.append(id_to_label[pred_tags_flat[i][j]])
-
-        eval_info, entity_info = metric.result()
-
+        f1_score = f1_score_func(y_true=data['label_ids'],
+                                 y_pred=pred_tags,
+                                 mask=data['attention'])
 
     return total_loss / len(data_loader)
 

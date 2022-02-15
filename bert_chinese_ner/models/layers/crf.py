@@ -176,7 +176,6 @@ class CRF(nn.Module):
             # .all() tests if all elements evaluate to True.
             # take batch_size number first element of a seq (first timestep)
             no_empty_seq = mask[0, :].all() if (self.batch_first == False) else mask[:, 0].all()
-            print(f"batch_first: {self.batch_first}. no_empty_seq: {no_empty_seq}")
             if not no_empty_seq:
                 raise ValueError("mask of the first timestep must all be on")
             # no_empty_seq = not self.batch_first and mask[0].all().item()
@@ -339,8 +338,8 @@ class CRF(nn.Module):
             # Set score to the next score if this timestep is valid (mask == 1)
             # and save the index that produces the next score
             # shape: (batch_size, num_tags)
-            score = torch.where(mask[i].unsqueeze(-1), next_score, score)
-            indices = torch.where(mask[i].unsqueeze(-1), indices, oor_idx)
+            score = torch.where(mask[i].bool().unsqueeze(-1), next_score, score)
+            indices = torch.where(mask[i].bool().unsqueeze(-1), indices, oor_idx)
             history_idx[i - 1] = indices
 
         # End transition score
@@ -430,8 +429,8 @@ class CRF(nn.Module):
             # Set score to the next score if this timestep is valid (mask == 1)
             # and save the index that produces the next score
             # shape: (batch_size, num_tags, nbest)
-            score = torch.where(mask[i].unsqueeze(-1).unsqueeze(-1), next_score, score)
-            indices = torch.where(mask[i].unsqueeze(-1).unsqueeze(-1), indices, oor_idx)
+            score = torch.where(mask[i].bool().unsqueeze(-1).unsqueeze(-1), next_score, score)
+            indices = torch.where(mask[i].bool().unsqueeze(-1).unsqueeze(-1), indices, oor_idx)
             history_idx[i - 1] = indices
 
         # End transition score shape: (batch_size, num_tags, nbest)

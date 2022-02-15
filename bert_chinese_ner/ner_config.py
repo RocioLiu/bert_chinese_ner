@@ -9,7 +9,7 @@ ROOT_DIR = join(*split(abspath(dirname(__file__)))[:-1])
 #ROOT_DIR = abspath(dirname(__file__))
 
 DATA_DIR = join(ROOT_DIR, "data")
-MODEL_PATH = join(ROOT_DIR, "outputs")
+MODEL_PATH = join(ROOT_DIR, "outputs", "model.bin")
 
 TRAINING_FILE = "example.train"
 DEV_FILE = "example.dev"
@@ -18,7 +18,7 @@ TEST_FILE = "example.test"
 PRETRAINED_MODEL_NAME = 'bert'
 
 EPOCHS = 3
-PRINT_EVERY_N_STEP = 50
+EVERY_N_STEP = 20
 
 TRAIN_BATCH_SIZE = 64
 DEV_BATCH_SIZE = 64

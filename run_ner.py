@@ -24,30 +24,97 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 MODEL_CLASSES = {
     ## bert ernie bert_wwm bert_wwwm_ext
-    'bert': (BertConfig, BertCrfForNer, CNerTokenizer),
-    'albert': (AlbertConfig, AlbertSoftmaxForNer, CNerTokenizer),
+    'bert': (BertConfig, BertCrfForNer, ner_config.TOKENIZER),
+    # 'albert': (AlbertConfig, AlbertSoftmaxForNer, ner_config.TOKENIZER),
 }
 
+FILE_NAME = {"train":ner_config.TRAINING_FILE, "dev":ner_config.DEV_FILE, "test":ner_config.TEST_FILE}
 
-def train_fn(data_loader, model, optimizer, scheduler, device):
+# ----
+
+processor = CNerProcessor()
+
+label_list = CNerProcessor().get_labels()
+label_to_id = {label: i for i, label in enumerate(label_list)}
+id_to_label = {i: label for i, label in enumerate(label_list)}
+
+
+best_f1 = 0
+steps = 0
+for epoch in tqdm(range(ner_config.EPOCHS)):
+
+    train_loss, steps = training_fn(train_dataloader, dev_dataloader, model, optimizer, scheduler, epoch, device, steps)
+
+    if eval_f1 > best_f1:
+        torch.save(model.state_dict(), ner_config.MODEL_PATH)
+        best_f1 = eval_f1
+
+
+
+def training_fn(train_dataloader, dev_dataloader,
+                model, optimizer, scheduler,
+                epoch, device, steps):
+
     model.train()
-    total_loss = 0
+    total_train_loss = 0
 
     progress_bar = tqdm(data_loader, desc=f"Epoch {}")
 
     # get a batch of data dict
-    for data in data_loader:
+    for data in train_dataloader:
+
+        steps += 1
         for k, v in data.items():
             # transpose the shape to (seq_len, batch_size) xxx
             data[k] = v.to(device)
         optimizer.zero_grad()
-        logits, loss = model(**data)
-        loss.backward()
+        train_logits, train_loss = model(**data)
+        train_loss.backward()
         nn.utils.clip_grad_norm_(model.parameters(), ner_config.GRAD_CLIP)
         optimizer.step()
         scheduler.step()
-        total_loss += loss.item()
-    return total_loss / len(data_loader)
+        total_train_loss += train_loss.item()
+
+        if steps % ner_config.PRINT_EVERY_N_STEP == 0:
+            model.eval()
+            y_true_list = []
+            y_pred_list = []
+            mask_list = []
+            total_val_loss = 0
+            for data in tqdm(data_loader, total=len(data_loader)):
+                for k, v in data.items():
+                    data[k] = v.to(device)
+
+                with torch.no_grad():
+                    val_logits, val_loss = model(**data)
+                    # pred_tags: (nbest, batch_size, seq_length)
+                    pred_tags = model.crf.decode(val_logits, data['attention_mask'])
+
+                total_val_loss += val_loss.item()
+
+                y_true_list.append(data["label_ids"])
+                y_pred_list.append(pred_tags)
+                mask_list.append(data["attention_mask"])
+
+            y_true_stack = torch.stack(y_true_list)
+            y_pred_stack = torch.stack(y_pred_list)
+            mask_stack = torch.stack(mask_list)
+
+
+            f1_score = f1_score_func(y_true=data['label_ids'],
+                                         y_pred=pred_tags,
+                                         mask=data['attention_mask'])
+
+
+
+
+            print(f"Epochs: {epoch + 1}/{ner_config.EPOCHS}")
+            print(f"Step: {steps}")
+
+
+
+
+    return total_train_loss / len(data_loader), steps
 
 
 def eval_fn(data_loader, model, device):
@@ -90,10 +157,7 @@ def predict_fn(data_loader, model):
 
 
 
-FILE_NAME = {"train":ner_config.TRAINING_FILE, "dev":ner_config.DEV_FILE, "test":ner_config.TEST_FILE}
-label_list = CNerProcessor().get_labels()
-label_to_id = {label: i for i, label in enumerate(label_list)}
-id_to_label = {i: label for i, label in enumerate(label_list)}
+
 
 train_dataset = NerDataset(file_name=FILE_NAME, mode="train")
 dev_dataset = NerDataset(file_name=FILE_NAME, mode="dev")

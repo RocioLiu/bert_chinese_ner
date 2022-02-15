@@ -155,3 +155,74 @@ def main():
                                  shuffle=True, drop_last=True)
 
     # --
+    model_config, model_class, model_tokenizer = MODEL_CLASSES[ner_config.PRETRAINED_MODEL_NAME]
+
+    model = model_class(pretrained_model_name=ner_config.BASE_MODEL_NAME,
+                        config=BertConfig.from_pretrained(
+                            ner_config.BASE_MODEL_NAME),
+                        num_tags=len(ner_config.LABELS),
+                        batch_first=True).to(device)
+    # model.to(device)
+    no_decay = ["bias", "LayerNorm.bias", "LayerNorm.weight"]
+    bert_param_optimizer = list(model.bert.named_parameters())
+    crf_param_optimizer = list(model.crf.named_parameters())
+    linear_param_optimizer = list(model.classifier.named_parameters())
+
+    optimizer_grouped_parameters = [
+        {"params": [p for n, p in bert_param_optimizer if
+                    not any(nd in n for nd in no_decay)],
+         "weight_decay": ner_config.WEIGHT_DECAY,
+         "lr": ner_config.LEARNING_RATE},
+        {"params": [p for n, p in bert_param_optimizer if
+                    any(nd in n for nd in no_decay)],
+         "weight_decay": 0.0, "lr": ner_config.LEARNING_RATE},
+
+        {"params": [p for n, p in crf_param_optimizer if
+                    not any(nd in n for nd in no_decay)],
+         "weight_decay": ner_config.WEIGHT_DECAY,
+         "lr": ner_config.CRF_LEARNING_RATE},
+        {"params": [p for n, p in crf_param_optimizer if
+                    any(nd in n for nd in no_decay)],
+         "weight_decay": 0.0, "lr": ner_config.CRF_LEARNING_RATE},
+
+        {"params": [p for n, p in linear_param_optimizer if
+                    not any(nd in n for nd in no_decay)],
+         "weight_decay": ner_config.WEIGHT_DECAY,
+         "lr": ner_config.CRF_LEARNING_RATE},
+        {"params": [p for n, p in linear_param_optimizer if
+                    any(nd in n for nd in no_decay)],
+         "weight_decay": 0.0, "lr": ner_config.CRF_LEARNING_RATE},
+    ]
+
+    NUM_TRAIN_STEPS = int(len(train_dataloader) * ner_config.EPOCHS)
+
+    WARMUP_STEPS = int(NUM_TRAIN_STEPS * ner_config.WARMUP_PROPORTION)
+    optimizer = AdamW(optimizer_grouped_parameters, lr=ner_config.LEARNING_RATE)
+    scheduler = get_linear_schedule_with_warmup(
+        optimizer, num_warmup_steps=WARMUP_STEPS,
+        num_training_steps=NUM_TRAIN_STEPS
+    )
+
+
+    # -- training process --
+    best_f1 = 0
+    steps = 0
+    for epoch in tqdm(range(1, ner_config.EPOCHS + 1)):
+
+        total_train_losses = []
+        total_eval_losses = []
+        total_eval_f1 = []
+
+        steps, train_losses, eval_losses, eval_f1 = training_fn(train_dataloader,
+                                                                dev_dataloader,
+                                                                model, optimizer,
+                                                                scheduler, epoch,
+                                                                device, steps)
+        total_train_losses.append(train_losses)
+        total_eval_losses.append(eval_losses)
+
+        if eval_f1 > best_f1:
+            torch.save(model.state_dict(), ner_config.MODEL_PATH)
+            best_f1 = eval_f1
+
+

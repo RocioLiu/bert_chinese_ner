@@ -4,7 +4,6 @@ from typing import List, Optional
 
 import bert_chinese_ner
 from .utils_ner import DataProcessor, InputExample, InputFeatures
-from .. import ner_config
 
 
 class CNerProcessor(DataProcessor):

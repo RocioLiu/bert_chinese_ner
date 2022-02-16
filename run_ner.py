@@ -14,18 +14,16 @@ from bert_chinese_ner.callbacks.lr_scheduler import get_linear_schedule_with_war
 from bert_chinese_ner.metrics.ner_metrics import f1_score_func
 from bert_chinese_ner.models.transformers.models.bert.configuration_bert import BertConfig
 
-import importlib
-import bert_chinese_ner
-importlib.reload(bert_chinese_ner)
-importlib.reload(ner_config)
-
+# import importlib
+# import bert_chinese_ner
+# importlib.reload(bert_chinese_ner)
+# importlib.reload(ner_config)
 
 
 MODEL_CLASSES = {
     'bert': (BertConfig, BertCrfForNer, ner_config.TOKENIZER),
     # 'albert': (AlbertConfig, AlbertForNer, ner_config.TOKENIZER),
 }
-
 
 
 def training_fn(train_dataloader, dev_dataloader,
@@ -163,30 +161,6 @@ test_dataset = dataset.EntityDataset(
     pos=[[0] * len(sentence)],
     tags=[[0] * len(sentence)] # Because this is test data, we can out any value we want here
 )
-
-model = EntityModel(num_pos, num_tag)
-model.load_state_dict(torch.load(config.MODEL_PATH))
-model.to(device)
-
-with torch.no_grad():
-    data = test_dataset[0]
-    for k, v in data.items():
-        # since it's only one sample and we need to make it batch-wise, we need unsqueeze 0th idx
-        # [128] -> [1, 128]
-        data[k] = v.to(device).unsqueeze(0)
-    pos, tag, _ = model(**data)
-
-    print(
-        enc_pos.inverse_transform(
-            pos.argmax(2).cpu().numpy().reshape(-1)
-        )[:len(tokenized_sentence)]
-    )  # argmax the 2nd index
-
-    print(
-        enc_tag.inverse_transform(
-            tag.argmax(2).cpu().numpy().reshape(-1)
-        )[:len(tokenized_sentence)]
-    )
 
 
 # ---

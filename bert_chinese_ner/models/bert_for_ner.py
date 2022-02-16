@@ -2,14 +2,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-# from bert_chinese_ner.models.transformers.models.bert.modeling_bert import BertPreTrainedModel, BertModel
 from .transformers.models.bert.modeling_bert import BertPreTrainedModel, BertModel
-
-# from bert_chinese_ner.models.layers.crf import CRF
 from .layers.crf import CRF
-
-# from bert_chinese_ner import ner_config
-from .. import ner_config
 
 
 class BertCrfForNer(BertPreTrainedModel):

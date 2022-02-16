@@ -2,20 +2,16 @@
 # "https://huggingface.co/bert-base-chinese/resolve/main/vocab.txt"
 import os
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, Optional, Union
-import importlib ##
 
 import torch
 from torch.utils.data import Dataset
 
-from bert_chinese_ner import ner_config
-from .. import ner_config
 
-from bert_chinese_ner.processors.ner_processor import CNerProcessor, convert_examples_to_features
+from .. import ner_config
 from ..processors.ner_processor import CNerProcessor, convert_examples_to_features
-from bert_chinese_ner.processors.utils_ner import InputFeatures
 from ..processors.utils_ner import InputFeatures
 
 

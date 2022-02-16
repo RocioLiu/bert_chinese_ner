@@ -1,19 +1,10 @@
 import os
-import importlib ##
 import torch
 from typing import List, Optional
 
 import bert_chinese_ner
 from .utils_ner import DataProcessor, InputExample, InputFeatures
-# from bert_chinese_ner.processors.utils_ner import DataProcessor, InputExample, InputFeatures
-
-
-# from bert_chinese_ner import ner_config
 from .. import ner_config
-
-# importlib.reload(bert_chinese_ner) ##
-# importlib.reload(ner_config) ##
-
 
 
 class CNerProcessor(DataProcessor):

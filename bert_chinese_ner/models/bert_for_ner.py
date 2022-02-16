@@ -8,10 +8,8 @@ from bert_chinese_ner.models.transformers.models.bert.modeling_bert import BertP
 from bert_chinese_ner.models.layers.crf import CRF
 from .layers.crf import CRF
 
-
 from bert_chinese_ner import ner_config
 from .. import ner_config
-
 
 
 class BertCrfForNer(BertPreTrainedModel):
@@ -59,43 +57,5 @@ class BertCrfForNer(BertPreTrainedModel):
             outputs = logits
 
         return outputs
-
-
-## ---
-# config = BertConfig.from_pretrained(ner_config.BASE_MODEL_NAME)
-# num_tags = len(ner_config.LABELS)
-#
-# bert = BertModel.from_pretrained(ner_config.BASE_MODEL_NAME)
-# dropout = nn.Dropout(config.hidden_dropout_prob)
-# classifier = nn.Linear(config.hidden_size, num_tags)
-# crf = CRF(num_tags=num_tags, batch_first=True)
-#
-# # forward
-# batch = next(iter(train_dataloader))
-# batch.keys()
-#
-# input_ids = batch['input_ids'].transpose(0, 1)
-# attention_mask = batch['attention_mask'].transpose(0, 1)
-# token_type_ids = batch['token_type_ids'].transpose(0, 1)
-# label_ids = batch['label_ids'].transpose(0, 1)
-#
-#
-# bert_outputs = bert(input_ids=input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
-# # o1, o2 = bert(input_ids=input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
-#
-# sequence_output = bert_outputs[0] # torch.Size([128, 64, 768])
-# pooler_output = bert_outputs[1] # torch.Size([128, 768])
-# sequence_output.shape # torch.Size([128, 64, 768])
-# sequence_output = dropout(sequence_output)
-# logits = classifier(sequence_output)
-# logits.shape # torch.Size([128, 64, 7])
-# # outputs = (logits, )
-#
-# # attention_mask.shape
-# loss = crf(emissions = logits, tags=label_ids, mask=attention_mask)
-#
-# ww = logits, loss
-# ee = outputs + (_, loss)
-
 
 

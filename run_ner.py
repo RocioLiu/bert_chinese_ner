@@ -23,7 +23,7 @@ importlib.reload(ner_config)
 
 MODEL_CLASSES = {
     'bert': (BertConfig, BertCrfForNer, ner_config.TOKENIZER),
-    # 'albert': (AlbertConfig, AlbertSoftmaxForNer, ner_config.TOKENIZER),
+    # 'albert': (AlbertConfig, AlbertForNer, ner_config.TOKENIZER),
 }
 
 
@@ -104,8 +104,45 @@ def training_fn(train_dataloader, dev_dataloader,
     return steps, train_losses, eval_losses, eval_f1
 
 
+def eval_fn(data_loader, model_class, device):
+    model.eval()
+    y_true_list = []
+    y_pred_list = []
+    mask_list = []
 
-def predict_fn(sentence, model_class, id_to_label, device):
+    total_eval_loss = 0
+    eval_losses = []
+
+    for data in data_loader:
+        for k, v in data.items():
+            data[k] = v.to(device)
+
+        with torch.no_grad():
+            eval_logits, eval_loss = model(**data)
+            # pred_tags: (nbest, batch_size, seq_length)
+            pred_tags = model.crf.decode(eval_logits, data['attention_mask'])
+
+        eval_losses.append(eval_loss)
+        total_eval_loss += eval_loss.item()
+
+        y_true_list.append(data["label_ids"])
+        y_pred_list.append(pred_tags)
+        mask_list.append(data["attention_mask"])
+
+    y_true_stack = torch.stack(y_true_list)
+    y_pred_stack = torch.stack(y_pred_list)
+    mask_stack = torch.stack(mask_list)
+
+    avg_train_loss = total_train_loss / ner_config.EVERY_N_STEP
+    avg_eval_loss = total_eval_loss / ner_config.EVERY_N_STEP
+
+    # f1 score of a test_dataloader
+    eval_f1 = f1_score_func(y_true=y_true_stack,
+                            y_pred=y_pred_stack,
+                            mask=mask_stack)
+
+
+def predict_fn(sentence, model, id_to_label, device):
 
     tokenized_sent = ner_config.TOKENIZER.tokenize(sentence)
     data = ner_config.TOKENIZER.encode_plus(sentence,
@@ -113,12 +150,6 @@ def predict_fn(sentence, model_class, id_to_label, device):
                                             padding='max_length',
                                             return_attention_mask=True,
                                             return_tensors='pt')
-
-    # model = model_class(pretrained_model_name=ner_config.BASE_MODEL_NAME,
-    #                     config=BertConfig.from_pretrained(ner_config.BASE_MODEL_NAME),
-    #                     num_tags=len(ner_config.LABELS),
-    #                     batch_first=True)
-    # model.load_state_dict(torch.load(ner_config.MODEL_PATH)).to(device)
 
     with torch.no_grad():
         for k, v in data.items():
@@ -263,7 +294,14 @@ def main():
         if eval_f1 > best_f1:
             torch.save(model.state_dict(), ner_config.MODEL_PATH)
             best_f1 = eval_f1
+    # --
 
+
+    model = model_class(pretrained_model_name=ner_config.BASE_MODEL_NAME,
+                        config=BertConfig.from_pretrained(ner_config.BASE_MODEL_NAME),
+                        num_tags=len(ner_config.LABELS),
+                        batch_first=True)
+    model.load_state_dict(torch.load(ner_config.MODEL_PATH)).to(device)
 
     # test on test_dataset
 
@@ -272,3 +310,7 @@ def main():
     # Prediction on an example
     sentence = ner_config.TEST_SENTENCE
     predict_fn(sentence, model_class, id_to_label, device)
+
+
+if __name__ == "__main__":
+    main()

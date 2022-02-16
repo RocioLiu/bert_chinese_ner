@@ -35,6 +35,14 @@ class CNerProcessor(DataProcessor):
         """Gets the list of labels for this data set."""
         return ['B-LOC', 'B-ORG', 'B-PER', 'I-LOC', 'I-ORG', 'I-PER', 'O']
 
+    def get_label_to_id(self):
+        """Get a dictionary which maps labels to ids"""
+        return {label: i for i, label in enumerate(self.get_labels())}
+
+    def get_id_to_label(self):
+        """Get a dictionary which maps ids to labels"""
+        return {i: label for i, label in enumerate(self.get_labels())}
+
     def _create_examples(self, rows, set_type):
         """
         Creates examples for the training and dev sets.
@@ -57,7 +65,7 @@ class CNerProcessor(DataProcessor):
 def convert_examples_to_features(
         examples: List[InputExample],
         tokenizer=None,
-        label_list=None,
+        label_to_id=None,
         max_seq_length: Optional[int] = None,
         pad_on_right=True) -> List[InputFeatures]:
     """ Loads a data file into a list of `InputBatch`s
@@ -65,7 +73,6 @@ def convert_examples_to_features(
         Args:
             pad_on_right: Default to True. Padding the sequence on the right hand side.
     """
-    label_to_id = {label: i for i, label in enumerate(label_list)}
     features = []
     for idx, example in enumerate(examples):
         tokens = example.text
@@ -121,6 +128,3 @@ def convert_examples_to_features(
     return features
 
 
-
-# processor = CNerProcessor()
-# examples = processor.get_dev_examples(ner_config.DATA_DIR)

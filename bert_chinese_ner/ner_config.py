@@ -28,7 +28,7 @@ MAX_LEN = 256
 
 BASE_MODEL_NAME = "bert-base-chinese"
 VOCAB_FILE = join("data", BASE_MODEL_NAME, "vocab.txt")
-LABELS = ['B-LOC', 'B-ORG', 'B-PER', 'I-LOC', 'I-ORG', 'I-PER', 'O']
+# LABELS = ['B-LOC', 'B-ORG', 'B-PER', 'I-LOC', 'I-ORG', 'I-PER', 'O']
 
 
 TOKENIZER = BertTokenizer.from_pretrained(
@@ -40,5 +40,6 @@ WEIGHT_DECAY = 0.01
 LEARNING_RATE = 3e-5
 CRF_LEARNING_RATE = 3e-5
 WARMUP_PROPORTION = 0.1
-
 GRAD_CLIP = 1.0
+
+TEST_SENTENCE = "我想要去南港citylink的麥當勞用優惠券買勁辣雞腿堡買一送一，結果遇到台南金城武"

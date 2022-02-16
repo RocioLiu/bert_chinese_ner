@@ -52,6 +52,7 @@ class NerDataset(Dataset):
                 raise KeyError("mode is not a valid split name")
 
         label_list = self.processor.get_labels()
+        label_to_id =
 
         if self.mode == Split.train.value:
             examples = self.processor.get_train_examples(self.data_dir, self.file_name)

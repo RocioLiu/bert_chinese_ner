@@ -36,11 +36,11 @@ def training_fn(train_dataloader, dev_dataloader,
     total_train_loss = 0
     train_losses = []
 
-    # train_progress_bar = tqdm(train_dataloader, desc=f"Epoch: {epoch}",
-    #                           leave=False, disable=False)
+    train_progress_bar = tqdm(train_dataloader, desc=f"Epoch: {epoch}",
+                              leave=False, disable=False)
 
     # get a batch of data dict
-    for data in tqdm(train_dataloader):
+    for data in train_progress_bar:
 
         steps += 1
         for k, v in data.items():
@@ -94,32 +94,76 @@ def training_fn(train_dataloader, dev_dataloader,
                                     y_pred=y_pred_stack,
                                     mask=mask_stack)
 
-            print(f"\nEpochs: {epoch}/{ner_config.EPOCHS}")
-            print(f"Step: {steps}")
-            print(f"Train loss: {avg_train_loss:.4f}")
-            print(f"Eval loss: {avg_eval_loss:.4f}")
-            print(f"Eval F1-score: {eval_f1:.4f} \n")
+            print(f"\nEpoch: {epoch}/{ner_config.EPOCHS}    step: {steps}")
+            # print(f"Step: {steps}")
+            print(f"train_loss: {avg_train_loss:.4f} - eval_loss: {avg_eval_loss:.4f} - eval_f1: {eval_f1:.4f} \n")
+            # print(f"Eval loss: {avg_eval_loss:.4f}")
+            # print(f"Eval F1-score: {eval_f1:.4f} \n")
 
     # return the last eval_f1 after traverse an epoch
     return steps, train_losses, eval_losses, eval_f1
 
 
 
-# here!! predict a new data
-def predict_fn(data_loader, model):
-    model.eval()
-    total__loss = 0
+sentence = ner_config.TEST_SENTENCE
+def predict_fn(sentence, device):
 
-    for data in tqdm(data_loader, total=len(data_loader)):
+    data = ner_config.TOKENIZER.encode_plus(sentence,
+                                            max_length=ner_config.MAX_LEN,
+                                            padding='max_length',
+                                            return_attention_mask=True,
+                                            return_tensors='pt')
+
+    model = model_class(pretrained_model_name=ner_config.BASE_MODEL_NAME,
+                        config=BertConfig.from_pretrained(ner_config.BASE_MODEL_NAME),
+                        num_tags=len(ner_config.LABELS),
+                        batch_first=True)
+    model.load_state_dict(torch.load(ner_config.MODEL_PATH)).to(device)
+
+    with torch.no_grad():
         for k, v in data.items():
             data[k] = v.to(device)
 
-        with torch.no_grad():
-            loss, outputs = model(**data)
+        logits = model(**data)
+        pred_tags = model.crf.decode(logits, data['attention_mask']).cpu().numpy().reshape(-1)
+        pred_tags[:data['attention_mask'].sum()]
 
-        total_loss += loss.item() # has loss or not
 
-    return
+
+
+
+# --
+
+
+test_dataset = dataset.EntityDataset(
+    texts=[sentence],
+    pos=[[0] * len(sentence)],
+    tags=[[0] * len(sentence)] # Because this is test data, we can out any value we want here
+)
+
+model = EntityModel(num_pos, num_tag)
+model.load_state_dict(torch.load(config.MODEL_PATH))
+model.to(device)
+
+with torch.no_grad():
+    data = test_dataset[0]
+    for k, v in data.items():
+        # since it's only one sample and we need to make it batch-wise, we need unsqueeze 0th idx
+        # [128] -> [1, 128]
+        data[k] = v.to(device).unsqueeze(0)
+    pos, tag, _ = model(**data)
+
+    print(
+        enc_pos.inverse_transform(
+            pos.argmax(2).cpu().numpy().reshape(-1)
+        )[:len(tokenized_sentence)]
+    )  # argmax the 2nd index
+
+    print(
+        enc_tag.inverse_transform(
+            tag.argmax(2).cpu().numpy().reshape(-1)
+        )[:len(tokenized_sentence)]
+    )
 
 
 # ---
@@ -154,9 +198,8 @@ def main():
     model_config, model_class, model_tokenizer = MODEL_CLASSES[ner_config.PRETRAINED_MODEL_NAME]
 
     model = model_class(pretrained_model_name=ner_config.BASE_MODEL_NAME,
-                        config=BertConfig.from_pretrained(
-                            ner_config.BASE_MODEL_NAME),
-                        num_tags=len(ner_config.LABELS),
+                        config=BertConfig.from_pretrained(ner_config.BASE_MODEL_NAME),
+                        num_tags=len(label_list),
                         batch_first=True).to(device)
     # model.to(device)
     no_decay = ["bias", "LayerNorm.bias", "LayerNorm.weight"]

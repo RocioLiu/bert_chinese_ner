@@ -42,4 +42,4 @@ CRF_LEARNING_RATE = 3e-5
 WARMUP_PROPORTION = 0.1
 GRAD_CLIP = 1.0
 
-TEST_SENTENCE = "我想要去南港citylink的麥當勞用優惠券買勁辣雞腿堡買一送一，結果遇到台南金城武"
+TEST_SENTENCE = "我想要去南港citylink的麥當勞用優惠券買勁辣雞腿堡買一送一，結果遇到台南金城武。"

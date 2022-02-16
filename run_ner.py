@@ -105,20 +105,20 @@ def training_fn(train_dataloader, dev_dataloader,
 
 
 
-sentence = ner_config.TEST_SENTENCE
-def predict_fn(sentence, device):
+def predict_fn(sentence, model_class, id_to_label, device):
 
+    tokenized_sent = ner_config.TOKENIZER.tokenize(sentence)
     data = ner_config.TOKENIZER.encode_plus(sentence,
                                             max_length=ner_config.MAX_LEN,
                                             padding='max_length',
                                             return_attention_mask=True,
                                             return_tensors='pt')
 
-    model = model_class(pretrained_model_name=ner_config.BASE_MODEL_NAME,
-                        config=BertConfig.from_pretrained(ner_config.BASE_MODEL_NAME),
-                        num_tags=len(ner_config.LABELS),
-                        batch_first=True)
-    model.load_state_dict(torch.load(ner_config.MODEL_PATH)).to(device)
+    # model = model_class(pretrained_model_name=ner_config.BASE_MODEL_NAME,
+    #                     config=BertConfig.from_pretrained(ner_config.BASE_MODEL_NAME),
+    #                     num_tags=len(ner_config.LABELS),
+    #                     batch_first=True)
+    # model.load_state_dict(torch.load(ner_config.MODEL_PATH)).to(device)
 
     with torch.no_grad():
         for k, v in data.items():
@@ -126,10 +126,10 @@ def predict_fn(sentence, device):
 
         logits = model(**data)
         pred_tags = model.crf.decode(logits, data['attention_mask']).cpu().numpy().reshape(-1)
-        pred_tags[:data['attention_mask'].sum()]
+        prediction = [id_to_label[id] for id in pred_tags[1:data['attention_mask'].sum()-1]]
 
-
-
+    for c, t in zip(tokenized_sent, prediction):
+        print(c, t)
 
 
 # --
@@ -177,8 +177,8 @@ def main():
     processor = CNerProcessor()
 
     label_list = processor.get_labels()
-    label_to_id = {label: i for i, label in enumerate(label_list)}
-    id_to_label = {i: label for i, label in enumerate(label_list)}
+    label_to_id = processor.get_label_to_id()
+    id_to_label = processor.get_id_to_label()
 
     train_dataset = NerDataset(file_name=FILE_NAME, mode="train")
     dev_dataset = NerDataset(file_name=FILE_NAME, mode="dev")
@@ -265,4 +265,10 @@ def main():
             best_f1 = eval_f1
 
 
-    # test on test_dataset!!
+    # test on test_dataset
+
+
+
+    # Prediction on an example
+    sentence = ner_config.TEST_SENTENCE
+    predict_fn(sentence, model_class, id_to_label, device)

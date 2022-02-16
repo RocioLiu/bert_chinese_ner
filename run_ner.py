@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from tqdm import tqdm
 
 import torch
@@ -243,6 +244,7 @@ def main():
     # -- training process --
     best_f1 = 0
     steps = 0
+    metric_df =
     for epoch in tqdm(range(1, ner_config.EPOCHS + 1)):
 
         total_train_losses = []

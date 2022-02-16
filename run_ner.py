@@ -36,9 +36,11 @@ def training_fn(train_dataloader, dev_dataloader,
     total_train_loss = 0
     train_losses = []
 
+    # train_progress_bar = tqdm(train_dataloader, desc=f"Epoch: {epoch}",
+    #                           leave=False, disable=False)
 
     # get a batch of data dict
-    for data in tqdm(1, len(train_dataloader)+1):
+    for data in tqdm(train_dataloader):
 
         steps += 1
         for k, v in data.items():
@@ -92,11 +94,11 @@ def training_fn(train_dataloader, dev_dataloader,
                                     y_pred=y_pred_stack,
                                     mask=mask_stack)
 
-            print(f"\nEpochs: {epoch + 1}/{ner_config.EPOCHS}")
+            print(f"\nEpochs: {epoch}/{ner_config.EPOCHS}")
             print(f"Step: {steps}")
-            print(f"Train loss: {avg_train_loss:.6f}")
-            print(f"Eval loss: {avg_eval_loss:.6f}")
-            print(f"Eval F1-score: {eval_f1:.6f} \n")
+            print(f"Train loss: {avg_train_loss:.4f}")
+            print(f"Eval loss: {avg_eval_loss:.4f}")
+            print(f"Eval F1-score: {eval_f1:.4f} \n")
 
     # return the last eval_f1 after traverse an epoch
     return steps, train_losses, eval_losses, eval_f1
@@ -106,7 +108,7 @@ def training_fn(train_dataloader, dev_dataloader,
 # here!! predict a new data
 def predict_fn(data_loader, model):
     model.eval()
-    total_loss = 0
+    total__loss = 0
 
     for data in tqdm(data_loader, total=len(data_loader)):
         for k, v in data.items():
@@ -118,12 +120,6 @@ def predict_fn(data_loader, model):
         total_loss += loss.item() # has loss or not
 
     return
-
-
-## hparams of BertCrfForNer class
-# config = BertConfig.from_pretrained(ner_config.BASE_MODEL_NAME)
-# num_tags = len(ner_config.LABELS)
-
 
 
 # ---
@@ -226,3 +222,4 @@ def main():
             best_f1 = eval_f1
 
 
+    # test on test_dataset!!

@@ -74,7 +74,7 @@ class DataProcessor:
             labels = []
             lines = f.read().splitlines()
             # simplified chinese -> traditional chinese
-            converter = opencc.OpenCC('s2t.json')
+            converter = opencc.OpenCC('s2t')
             lines = converter.convert('\n'.join(lines)).split('\n')
             # lines: ['海 O', '釣 O', ..., '域 O', '。 O']
             for line in lines:

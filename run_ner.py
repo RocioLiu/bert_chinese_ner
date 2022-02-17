@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from os.path import join
 from tqdm import tqdm
 
 import torch
@@ -258,7 +259,7 @@ def main():
             torch.save(model.state_dict(), ner_config.MODEL_PATH)
             best_f1 = eval_f1
 
-    metric_df.to_csv(ner_config.OUTPUT_PATH)
+    metric_df.to_csv(join(ner_config.OUTPUT_PATH, 'metrics.csv'))
 
     # --
     # Load the trained model for evaluating on test dataset and prediction

@@ -11,6 +11,8 @@ ROOT_DIR = join(*split(abspath(dirname(__file__)))[:-1])
 DATA_DIR = join(ROOT_DIR, "data")
 OUTPUT_PATH = join(ROOT_DIR, "outputs")
 MODEL_PATH = join(OUTPUT_PATH, "checkpoint", "model.pth")
+OUTPUT_JSON = join(OUTPUT_PATH, "history.json")
+OUTPUT_CSV = join(OUTPUT_PATH, "history.csv")
 
 TRAINING_FILE = "example.train"
 DEV_FILE = "example.dev"
@@ -19,11 +21,11 @@ TEST_FILE = "example.test"
 PRETRAINED_MODEL_NAME = 'bert'
 
 EPOCHS = 1
-EVERY_N_STEP = 20
+EVERY_N_STEP = 50
 
-TRAIN_BATCH_SIZE = 64
-DEV_BATCH_SIZE = 64
-TEST_BATCH_SIZE = 64
+TRAIN_BATCH_SIZE = 32
+DEV_BATCH_SIZE = 32
+TEST_BATCH_SIZE = 32
 
 MAX_LEN = 256
 

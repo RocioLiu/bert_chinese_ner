@@ -28,12 +28,13 @@ MODEL_CLASSES = {
 
 
 def training_fn(train_dataloader, dev_dataloader,
-                model, optimizer, scheduler,
-                epoch, device, steps):
+                model, optimizer, scheduler, epoch,
+                device, steps, metric_df):
 
     model.train()
     total_train_loss = 0
-    train_losses = []
+    # train_losses = []
+    dev_steps = len(dev_dataloader)
 
     train_progress_bar = tqdm(train_dataloader, desc=f"Epoch: {epoch}",
                               leave=False, disable=False)
@@ -43,7 +44,6 @@ def training_fn(train_dataloader, dev_dataloader,
 
         steps += 1
         for k, v in data.items():
-            # transpose the shape to (seq_len, batch_size) xxx
             data[k] = v.to(device)
         optimizer.zero_grad()
         train_logits, train_loss = model(**data)
@@ -52,8 +52,9 @@ def training_fn(train_dataloader, dev_dataloader,
         optimizer.step()
         scheduler.step()
 
-        train_losses.append(train_loss)
+        # train_losses.append(train_loss)
         total_train_loss += train_loss.item()
+
 
         if steps % ner_config.EVERY_N_STEP == 0:
 
@@ -63,7 +64,7 @@ def training_fn(train_dataloader, dev_dataloader,
             mask_list = []
 
             total_eval_loss = 0
-            eval_losses = []
+            # eval_losses = []
 
             for data in dev_dataloader:
                 for k, v in data.items():
@@ -74,7 +75,7 @@ def training_fn(train_dataloader, dev_dataloader,
                     # pred_tags: (nbest, batch_size, seq_length)
                     pred_tags = model.crf.decode(eval_logits, data['attention_mask'])
 
-                eval_losses.append(eval_loss)
+                # eval_losses.append(eval_loss)
                 total_eval_loss += eval_loss.item()
 
                 y_true_list.append(data["label_ids"])
@@ -86,12 +87,16 @@ def training_fn(train_dataloader, dev_dataloader,
             mask_stack = torch.stack(mask_list)
 
             avg_train_loss = total_train_loss / ner_config.EVERY_N_STEP
-            avg_eval_loss = total_eval_loss / ner_config.EVERY_N_STEP
+            avg_eval_loss = total_eval_loss / dev_steps
 
             # f1 score of a dev_dataloader
             eval_f1 = f1_score_func(y_true=y_true_stack,
                                     y_pred=y_pred_stack,
                                     mask=mask_stack)
+
+            metric_row = pd.DataFrame([[steps, avg_train_loss, avg_eval_loss, eval_f1]],
+                                      columns=['step', 'train_loss', 'eval_loss', 'eval_f1'])
+            metric_df = pd.concat([metric_df, metric_row], ignore_index=True, axis=0)
 
             print(f"\nEpoch: {epoch}/{ner_config.EPOCHS}    step: {steps}")
             # print(f"Step: {steps}")
@@ -100,7 +105,7 @@ def training_fn(train_dataloader, dev_dataloader,
             # print(f"Eval F1-score: {eval_f1:.4f} \n")
 
     # return the last eval_f1 after traverse an epoch
-    return steps, train_losses, eval_losses, eval_f1
+    return steps, eval_f1, metric_df
 
 
 def eval_fn(data_loader, model, device):
@@ -153,15 +158,6 @@ def predict_fn(sentence, model, id_to_label, device):
     for c, t in zip(tokenized_sent, prediction):
         print(c, t)
 
-
-# --
-
-
-test_dataset = dataset.EntityDataset(
-    texts=[sentence],
-    pos=[[0] * len(sentence)],
-    tags=[[0] * len(sentence)] # Because this is test data, we can out any value we want here
-)
 
 
 # ---
@@ -244,30 +240,31 @@ def main():
     # -- training process --
     best_f1 = 0
     steps = 0
-    metric_df =
+    metric_df = pd.DataFrame(columns=['step', 'train_loss', 'eval_loss', 'eval_f1'])
+
     for epoch in tqdm(range(1, ner_config.EPOCHS + 1)):
 
-        total_train_losses = []
-        total_eval_losses = []
-        total_eval_f1 = []
+        # total_train_losses = []
+        # total_eval_losses = []
+        # total_eval_f1 = []
 
-        steps, train_losses, eval_losses, eval_f1 = training_fn(train_dataloader,
-                                                                dev_dataloader,
-                                                                model, optimizer,
-                                                                scheduler, epoch,
-                                                                device, steps)
-        total_train_losses.append(train_losses)
-        total_eval_losses.append(eval_losses)
+        steps, eval_f1, metric_df = training_fn(train_dataloader, dev_dataloader,
+                                                model, optimizer, scheduler,
+                                                epoch, device, steps, metric_df)
+        # total_train_losses.append(train_losses)
+        # total_eval_losses.append(eval_losses)
 
         if eval_f1 > best_f1:
             torch.save(model.state_dict(), ner_config.MODEL_PATH)
             best_f1 = eval_f1
+
+    metric_df.to_csv(ner_config.OUTPUT_PATH)
+
     # --
-
-
+    # Load the trained model for evaluating on test dataset and prediction
     model = model_class(pretrained_model_name=ner_config.BASE_MODEL_NAME,
                         config=BertConfig.from_pretrained(ner_config.BASE_MODEL_NAME),
-                        num_tags=len(ner_config.LABELS),
+                        num_tags=len(label_list),
                         batch_first=True)
     model.load_state_dict(torch.load(ner_config.MODEL_PATH)).to(device)
 

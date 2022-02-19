@@ -146,26 +146,47 @@ def eval_fn(data_loader, model, device):
     return eval_f1
 
 
-def predict_fn(sentence, model, id_to_label, device):
+def predict_fn(inputs, model, id_to_label, model_tokenizer, device):
 
-    tokenized_sent = ner_config.TOKENIZER.tokenize(sentence)
-    data = ner_config.TOKENIZER.encode_plus(sentence,
+    is_sentence = True if type(inputs) == str else False
+
+    if is_sentence:
+        tokenized_sent = model_tokenizer.tokenize(inputs)
+        data = model_tokenizer.encode_plus(inputs,
                                             max_length=ner_config.MAX_LEN,
                                             padding='max_length',
                                             return_attention_mask=True,
                                             return_tensors='pt')
 
-    with torch.no_grad():
-        for k, v in data.items():
-            data[k] = v.to(device)
+        with torch.no_grad():
+            for k, v in data.items():
+                data[k] = v.to(device)
 
-        logits = model(**data)
+            logits = model(**data)
+
         pred_tags = model.crf.decode(logits, data['attention_mask']).cpu().numpy().reshape(-1)
-        prediction = [id_to_label[id] for id in pred_tags[1:data['attention_mask'].sum()-1]]
+        y_pred = [id_to_label[i] for i in pred_tags[1:data['attention_mask'].sum() - 1]]
 
-    for c, t in zip(tokenized_sent, prediction):
-        print(c, t)
+        for c, p in zip(tokenized_sent, y_pred):
+            print(c, p)
 
+    else:
+        tokenized_sent = model_tokenizer.tokenize(model_tokenizer.decode(
+            inputs['input_ids'], skip_special_tokens=True))
+        data = inputs
+
+        with torch.no_grad():
+            for k, v in data.items():
+                data[k] = v.unsqueeze(0).to(device)
+
+            logits, loss = model(**data)
+
+        pred_tags = model.crf.decode(logits, data['attention_mask']).cpu().numpy().reshape(-1)
+        y_pred = [id_to_label[i] for i in pred_tags[1:data['attention_mask'].sum()-1]]
+        y_true = [id_to_label[i] for i in data['label_ids'].squeeze(0).numpy()[1:data['attention_mask'].sum()-1]]
+
+        for c, p, t in zip(tokenized_sent, y_pred, y_true):
+            print(c, p, t)
 
 
 # ---
@@ -251,8 +272,8 @@ def main():
     steps = 0
     history_df = pd.DataFrame(columns=['step', 'train_loss', 'eval_loss', 'eval_f1'])
     history_dict = {"step": [],
-                    "trian_loss": [],
-                    "evla_loss": [],
+                    "train_loss": [],
+                    "eval_loss": [],
                     "eval_f1": []}
 
     for epoch in tqdm(range(1, ner_config.EPOCHS + 1)):
@@ -275,25 +296,31 @@ def main():
 
     history_df.to_csv(ner_config.OUTPUT_CSV)
 
+
     # --
     # Load the trained model for evaluating on test dataset and prediction
     model = model_class(pretrained_model_name=ner_config.BASE_MODEL_NAME,
                         config=BertConfig.from_pretrained(ner_config.BASE_MODEL_NAME),
                         num_tags=len(label_list),
                         batch_first=True)
-    state_dict = torch.load(ner_config.MODEL_PATH)
+    # , map_location=torch.device('cpu')
+    state_dict = torch.load(ner_config.MODEL_PATH, map_location=torch.device('cpu'))
     model.load_state_dict(state_dict)
     model.to(device)
 
 
     # evaluate the model on test_dataloader
     test_f1 = eval_fn(test_dataloader, model, device)
-    print(f"f1 score on test dataset: {test_f1}")
+    print(f"\n\nf1 score on test dataset: {test_f1}\n\n")
 
 
     # Prediction on an example
-    sentence = ner_config.TEST_SENTENCE
-    predict_fn(sentence, model_class, id_to_label, device)
+    inputs = ner_config.TEST_SENTENCE
+    predict_fn(inputs, model, id_to_label,model_tokenizer, device)
+
+    # Prediction on an of test_dataset
+    inputs = test_dataset[121]
+    predict_fn(inputs, model, id_to_label, model_tokenizer, device)
 
     # load history.json
     with open(ner_config.OUTPUT_JSON, 'r') as file:

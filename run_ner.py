@@ -15,6 +15,7 @@ from bert_chinese_ner.models.bert_for_ner import BertCrfForNer
 from bert_chinese_ner.callbacks.optimizer import AdamW
 from bert_chinese_ner.callbacks.lr_scheduler import get_linear_schedule_with_warmup
 from bert_chinese_ner.metrics.ner_metrics import f1_score_func
+from bert_chinese_ner.utils.plot_loss import loss_f1_plot
 from bert_chinese_ner.models.transformers.models.bert.configuration_bert import BertConfig
 
 # import importlib
@@ -323,8 +324,13 @@ def main():
     predict_fn(inputs, model, id_to_label, model_tokenizer, device)
 
     # load history.json
-    with open(ner_config.OUTPUT_JSON, 'r') as file:
-        history = file.read()
+    with open(ner_config.OUTPUT_JSON, 'r') as json_file:
+        history = json.load(json_file)
+
+
+    # plot the losses and f1-scores
+    loss_f1_plot(history, ner_config.EPOCHS)
+
 
 
 if __name__ == "__main__":

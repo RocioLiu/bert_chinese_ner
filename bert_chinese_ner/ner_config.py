@@ -11,6 +11,7 @@ ROOT_DIR = join(*split(abspath(dirname(__file__)))[:-1])
 DATA_DIR = join(ROOT_DIR, "data")
 OUTPUT_PATH = join(ROOT_DIR, "outputs")
 MODEL_PATH = join(OUTPUT_PATH, "checkpoint", "model.pth")
+IMG_PATH = join(OUTPUT_PATH, "images", "loss_f1.png")
 OUTPUT_JSON = join(OUTPUT_PATH, "history.json")
 OUTPUT_CSV = join(OUTPUT_PATH, "history.csv")
 

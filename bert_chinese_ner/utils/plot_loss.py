@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 
 
-def loss_f1_plot(history, epochs):
+def loss_f1_plot(history, epochs, img_path):
     train_loss = history['train_loss']
     eval_loss = history['eval_loss']
     eval_f1 = history['eval_f1']
@@ -29,3 +29,5 @@ def loss_f1_plot(history, epochs):
     axes[1].set_ylabel('F1-score', fontsize='large')
 
     axes[0].set_title('Loss  &  F1-score', fontsize='x-large')
+
+    plt.savefig(img_path)

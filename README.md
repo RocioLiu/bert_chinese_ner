@@ -10,3 +10,5 @@ Implementing BERT + CRF with PyTorch for Chinese named entity recognition (NER).
 ### Install
 ### Run NER
 #### BERT + CRF result
+The losses and F1-score
+![](https://github.com/RocioLiu/bert_chinese_ner/blob/main/outputs/images/loss_f1.png)

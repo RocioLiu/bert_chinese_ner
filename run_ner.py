@@ -329,7 +329,9 @@ def main():
 
 
     # plot the losses and f1-scores
-    loss_f1_plot(history, ner_config.EPOCHS, ner_config.IMG_PATH)
+    loss_f1_plot(history, ner_config.EPOCHS, ner_config.IMG_PATH,
+                 plot_title='Bert + CRF layer - Performance',
+                 y_label='CRF loss')
 
 
 

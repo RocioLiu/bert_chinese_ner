@@ -18,11 +18,6 @@ from bert_chinese_ner.metrics.ner_metrics import f1_score_func
 from bert_chinese_ner.utils.plot_loss import loss_f1_plot
 from bert_chinese_ner.models.transformers.models.bert.configuration_bert import BertConfig
 
-# import importlib
-# import bert_chinese_ner
-# importlib.reload(bert_chinese_ner)
-# importlib.reload(ner_config)
-
 
 MODEL_CLASSES = {
     'bert': (BertConfig, BertCrfForNer, ner_config.TOKENIZER),

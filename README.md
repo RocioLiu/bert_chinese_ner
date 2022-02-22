@@ -2,17 +2,26 @@
 Implementing BERT + CRF with PyTorch for Chinese named entity recognition (NER).
 
 ## Quickstart
-#### Prerequisites
-1. Create a python virtual environment `virtualenv venv`
-2. source `source venv/bin/activate`
-3. install required python package `pip install -r requirements.txt`
-4. download People’s Daily dataset from https://github.com/OYE93/Chinese-NLP-Corpus/tree/master/NER
+### Prerequisites
+* Create a python virtual environment `virtualenv venv`
+* Source `source venv/bin/activate`
 
-#### model list
+### Installing
+* Install required python package `pip install -r requirements.txt`
+
+### Training
+* Download People’s Daily dataset from https://github.com/OYE93/Chinese-NLP-Corpus/tree/master/NER and place the data files in `data` folder.
+* Run the following command
+```bash
+python run_ner.py
+```
+
+## Implementation detail
+### model list
 * BERT + CRF
 
-### Install
 ### Run NER
-#### BERT + CRF result
+## Results
+#### BERT + CRF 
 The losses and F1-score
 ![](https://github.com/RocioLiu/bert_chinese_ner/blob/main/outputs/images/loss_f1.png)

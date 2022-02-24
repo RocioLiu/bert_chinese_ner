@@ -30,7 +30,7 @@ def training_fn(train_dataloader, dev_dataloader,
                 history_dict, history_df):
 
     model.train()
-    total_train_loss = 0
+    total_train_loss = 0 # reset every epoch
     # train_losses = []
     dev_steps = len(dev_dataloader)
 
@@ -51,7 +51,7 @@ def training_fn(train_dataloader, dev_dataloader,
         scheduler.step()
 
         # train_losses.append(train_loss)
-        total_train_loss += train_loss.item()
+        # total_train_loss += train_loss.item()
 
 
         if steps % ner_config.EVERY_N_STEP == 0:
@@ -84,7 +84,7 @@ def training_fn(train_dataloader, dev_dataloader,
             y_pred_stack = torch.stack(y_pred_list)
             mask_stack = torch.stack(mask_list)
 
-            avg_train_loss = total_train_loss / steps
+            # avg_train_loss = total_train_loss / steps
             avg_eval_loss = total_eval_loss / dev_steps
 
 
@@ -104,7 +104,7 @@ def training_fn(train_dataloader, dev_dataloader,
 
             print(f"\nEpoch: {epoch}/{ner_config.EPOCHS}    step: {steps}")
             # print(f"Step: {steps}")
-            print(f"train_loss: {avg_train_loss:.4f} - eval_loss: {avg_eval_loss:.4f} - eval_f1: {eval_f1:.4f} \n")
+            print(f"train_loss: {train_loss.item():.4f} - eval_loss: {avg_eval_loss:.4f} - eval_f1: {eval_f1:.4f} \n")
             # print(f"Eval loss: {avg_eval_loss:.4f}")
             # print(f"Eval F1-score: {eval_f1:.4f} \n")
 

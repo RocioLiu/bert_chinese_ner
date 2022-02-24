@@ -14,7 +14,7 @@ from bert_chinese_ner.processors.ner_processor import CNerProcessor
 from bert_chinese_ner.models.bert_for_ner import BertCrfForNer
 from bert_chinese_ner.callbacks.optimizer import AdamW
 from bert_chinese_ner.callbacks.lr_scheduler import get_linear_schedule_with_warmup
-from bert_chinese_ner.metrics.ner_metrics import f1_score_func
+from bert_chinese_ner.metrics.ner_metrics import score_func
 from bert_chinese_ner.utils.plot_loss import loss_f1_plot
 from bert_chinese_ner.models.transformers.models.bert.configuration_bert import BertConfig
 
@@ -89,24 +89,28 @@ def training_fn(train_dataloader, dev_dataloader,
 
 
             # f1 score of a dev_dataloader
-            eval_f1 = f1_score_func(y_true=y_true_stack,
-                                    y_pred=y_pred_stack,
-                                    mask=mask_stack)
+            eval_precision, eval_recall, eval_f1 = score_func(y_true=y_true_stack,
+                                                              y_pred=y_pred_stack,
+                                                              mask=mask_stack)
 
             history_dict['step'].append(steps)
-            history_dict['train_loss'].append(avg_train_loss)
+            history_dict['train_loss'].append(train_loss.item())
             history_dict['eval_loss'].append(avg_eval_loss)
+            history_dict['eval_precision'].append(eval_precision)
+            history_dict['eval_recall'].append(eval_recall)
             history_dict['eval_f1'].append(eval_f1)
 
-            history_row = pd.DataFrame([[steps, avg_train_loss, avg_eval_loss, eval_f1]],
-                                      columns=['step', 'train_loss', 'eval_loss', 'eval_f1'])
+            history_row = pd.DataFrame([[steps, train_loss.item(), avg_eval_loss,
+                                         eval_precision, eval_recall, eval_f1]],
+                                      columns=['step', 'train_loss', 'eval_loss',
+                                               'eval_precision', 'eval_recall', 'eval_f1'])
             history_df = pd.concat([history_df, history_row], ignore_index=True, axis=0)
 
             print(f"\nEpoch: {epoch}/{ner_config.EPOCHS}    step: {steps}")
             # print(f"Step: {steps}")
-            print(f"train_loss: {train_loss.item():.4f} - eval_loss: {avg_eval_loss:.4f} - eval_f1: {eval_f1:.4f} \n")
-            # print(f"Eval loss: {avg_eval_loss:.4f}")
-            # print(f"Eval F1-score: {eval_f1:.4f} \n")
+            print(f"train_loss: {train_loss.item():.4f} - eval_loss: {avg_eval_loss:.4f} "
+                  f"- eval_precision: {eval_precision:.4f} - eval_recall: {eval_recall:.4f} "
+                  f"- eval_f1: {eval_f1:.4f} \n")
 
     # return the last eval_f1 after traverse an epoch
     return steps, eval_f1, history_dict, history_df
@@ -135,11 +139,11 @@ def eval_fn(data_loader, model, device):
     mask_stack = torch.stack(mask_list)
 
     # f1 score of a test_dataloader
-    eval_f1 = f1_score_func(y_true=y_true_stack,
-                            y_pred=y_pred_stack,
-                            mask=mask_stack)
+    eval_precision, eval_recall, eval_f1 = score_func(y_true=y_true_stack,
+                                                      y_pred=y_pred_stack,
+                                                      mask=mask_stack)
 
-    return eval_f1
+    return eval_precision, eval_recall, eval_f1
 
 
 def predict_fn(inputs, model, id_to_label, model_tokenizer, device):

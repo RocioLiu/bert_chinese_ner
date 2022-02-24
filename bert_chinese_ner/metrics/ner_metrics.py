@@ -1,8 +1,8 @@
 import numpy as np
-from sklearn.metrics import f1_score
+from sklearn.metrics import precision_recall_fscore_support
 
 
-def f1_score_func(y_true, y_pred, mask):
+def score_func(y_true, y_pred, mask):
     """
     Compute the f1 score of a data_loader
     Args:
@@ -26,6 +26,8 @@ def f1_score_func(y_true, y_pred, mask):
             y_true_flat.extend(y_true[b][i, :j].cpu().numpy())
             y_pred_flat.extend(y_pred[b].squeeze(0)[i, :j].cpu().numpy())
 
-    f1 = f1_score(y_true_flat, y_pred_flat, average="weighted")
+    precision, recall, f1, _ = precision_recall_fscore_support(y_true_flat,
+                                                               y_pred_flat,
+                                                               average="weighted")
 
-    return f1
+    return precision, recall, f1

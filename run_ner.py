@@ -270,10 +270,13 @@ def main():
     # -- training process --
     best_f1 = 0
     steps = 0
-    history_df = pd.DataFrame(columns=['step', 'train_loss', 'eval_loss', 'eval_f1'])
+    history_df = pd.DataFrame(columns=['step', 'train_loss', 'eval_loss',
+                                       "eval_precision", "eval_recall", 'eval_f1'])
     history_dict = {"step": [],
                     "train_loss": [],
                     "eval_loss": [],
+                    "eval_precision": [],
+                    "eval_recall": [],
                     "eval_f1": []}
 
     for epoch in tqdm(range(1, ner_config.EPOCHS + 1)):
@@ -310,8 +313,11 @@ def main():
 
 
     # evaluate the model on test_dataloader
-    test_f1 = eval_fn(test_dataloader, model, device)
-    print(f"\n\nf1 score on test dataset: {test_f1}\n\n")
+    test_precision, test_recall, test_f1 = eval_fn(test_dataloader, model, device)
+    print(f"\n\n- test dataset performance - \n"
+          f"precision: {test_precision}\n"
+          f"recall: {test_recall}\n"
+          f"f1-score: {test_f1}\n\n")
 
 
     # Prediction on an example

@@ -3,8 +3,14 @@ Implementing BERT + CRF with PyTorch for Chinese named entity recognition (NER).
 
 ## Quickstart
 ### Prerequisites
+#### virtualenv option
 * Create a python virtual environment `virtualenv venv`
 * Source `source venv/bin/activate`
+
+#### conda option
+* Create a python virtual environment 
+* `conda create --name venv python=3.7`
+* Source `conda activate venv`
 
 ### Installing
 * Install required python package `pip install -r requirements.txt`

@@ -15,7 +15,7 @@ from bert_chinese_ner.models.bert_for_ner import BertCrfForNer
 from bert_chinese_ner.callbacks.optimizer import AdamW
 from bert_chinese_ner.callbacks.lr_scheduler import get_linear_schedule_with_warmup
 from bert_chinese_ner.metrics.ner_metrics import score_func
-from bert_chinese_ner.utils.plot_loss import loss_f1_plot
+from bert_chinese_ner.utils.plot_loss import loss_metric_plot
 from bert_chinese_ner.models.transformers.models.bert.configuration_bert import BertConfig
 
 
@@ -102,13 +102,13 @@ def training_fn(train_dataloader, dev_dataloader,
 
             history_row = pd.DataFrame([[steps, train_loss.item(), avg_eval_loss,
                                          eval_precision, eval_recall, eval_f1]],
-                                      columns=['step', 'train_loss', 'eval_loss',
+                                       columns=['step', 'train_loss', 'eval_loss',
                                                'eval_precision', 'eval_recall', 'eval_f1'])
             history_df = pd.concat([history_df, history_row], ignore_index=True, axis=0)
 
             print(f"\nEpoch: {epoch}/{ner_config.EPOCHS}    step: {steps}")
             # print(f"Step: {steps}")
-            print(f"train_loss: {train_loss.item():.4f} - eval_loss: {avg_eval_loss:.4f} "
+            print(f"- train_loss: {train_loss.item():.4f} - eval_loss: {avg_eval_loss:.4f}\n"
                   f"- eval_precision: {eval_precision:.4f} - eval_recall: {eval_recall:.4f} "
                   f"- eval_f1: {eval_f1:.4f} \n")
 
@@ -333,10 +333,10 @@ def main():
         history = json.load(json_file)
 
 
-    # plot the losses and f1-scores
-    loss_f1_plot(history, ner_config.EPOCHS, ner_config.IMG_PATH,
-                 plot_title='Bert + CRF layer - Performance',
-                 y_label='CRF loss')
+    # plot the loss and precision, recall, and f1-score
+    loss_metric_plot(history, ner_config.EPOCHS, ner_config.IMG_PATH,
+                     plot_title='Bert + CRF layer - Performance',
+                     y_label='CRF loss')
 
 
 

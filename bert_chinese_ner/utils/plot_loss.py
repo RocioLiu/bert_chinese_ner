@@ -30,7 +30,7 @@ def loss_metric_plot(history, epochs, img_path, plot_title, y_label):
     axes[1].set_xticks(steps)
     axes[1].set_xticklabels(sparse_epochs)
 
-    axes[0].legend(loc='lower right')
+    axes[1].legend(loc='lower right')
     axes[1].set_xlabel('Num of Epochs', fontsize='large')
     axes[1].set_ylabel('Eval Precision, Recall, F1-score', fontsize='large')
     # axes[1].grid()

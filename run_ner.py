@@ -18,6 +18,8 @@ from bert_chinese_ner.metrics.ner_metrics import score_func
 from bert_chinese_ner.utils.plot_loss import loss_metric_plot
 from bert_chinese_ner.models.transformers.models.bert.configuration_bert import BertConfig
 
+import importlib
+importlib.reload(ner_config)
 
 MODEL_CLASSES = {
     'bert': (BertConfig, BertCrfForNer, ner_config.TOKENIZER),
@@ -183,7 +185,7 @@ def predict_fn(inputs, model, id_to_label, model_tokenizer, device):
 
         pred_tags = model.crf.decode(logits, data['attention_mask']).cpu().numpy().reshape(-1)
         y_pred = [id_to_label[i] for i in pred_tags[1:data['attention_mask'].sum()-1]]
-        y_true = [id_to_label[i] for i in data['label_ids'].squeeze(0).numpy()[1:data['attention_mask'].sum()-1]]
+        y_true = [id_to_label[i] for i in data['label_ids'].squeeze(0).cpu().numpy()[1:data['attention_mask'].sum()-1]]
 
         for c, p, t in zip(tokenized_sent, y_pred, y_true):
             print(c, p, t)

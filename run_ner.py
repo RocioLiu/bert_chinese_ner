@@ -26,11 +26,11 @@ MODEL_CLASSES = {
 
 
 def training_fn(train_dataloader, dev_dataloader,
-                model, optimizer, scheduler, epoch, device, steps,
+                model, optimizer, scheduler, device, grad_clip, epoch, steps,
                 history_dict, history_df):
 
     model.train()
-    total_train_loss = 0 # reset every epoch
+    # total_train_loss = 0 # reset every epoch
     # train_losses = []
     dev_steps = len(dev_dataloader)
 
@@ -46,7 +46,7 @@ def training_fn(train_dataloader, dev_dataloader,
         optimizer.zero_grad()
         train_logits, train_loss = model(**data)
         train_loss.backward()
-        nn.utils.clip_grad_norm_(model.parameters(), ner_config.GRAD_CLIP)
+        nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
         optimizer.step()
         scheduler.step()
 
@@ -283,8 +283,9 @@ def main():
         steps, eval_f1, history_dict, history_df = training_fn(train_dataloader,
                                                                dev_dataloader,
                                                                model, optimizer,
-                                                               scheduler, epoch,
-                                                               device, steps,
+                                                               scheduler, device,
+                                                               ner_config.GRAD_CLIP,
+                                                               epoch, steps,
                                                                history_dict,
                                                                history_df)
         # total_train_losses.append(train_losses)

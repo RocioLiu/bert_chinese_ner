@@ -9,7 +9,7 @@ from .layers.crf import CRF
 class BertCrfForNer(BertPreTrainedModel):
     def __init__(self, pretrained_model_name, config, num_tags, batch_first=False):
         super(BertCrfForNer, self).__init__(config)
-        self.bert = BertModel.from_pretrained(pretrained_model_name)
+        self.bert = BertModel(pretrained_model_name)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
         self.classifier = nn.Linear(config.hidden_size, num_tags)
         self.crf = CRF(num_tags=num_tags, batch_first=batch_first)

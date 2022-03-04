@@ -303,10 +303,10 @@ def main():
 
     # --
     # Load the trained model for evaluating on test dataset and prediction
-    model = model_class(pretrained_model_name=ner_config.BASE_MODEL_NAME,
-                        config=BertConfig.from_pretrained(ner_config.BASE_MODEL_NAME),
-                        num_tags=len(label_list),
-                        batch_first=True)
+    model = model_class.from_pretrained(pretrained_model_name=ner_config.BASE_MODEL_NAME,
+                                        config=BertConfig.from_pretrained(ner_config.BASE_MODEL_NAME),
+                                        num_tags=len(label_list),
+                                        batch_first=True)
     # , map_location=torch.device('cpu')
     state_dict = torch.load(ner_config.MODEL_PATH, map_location=torch.device('cpu'))
     model.load_state_dict(state_dict)

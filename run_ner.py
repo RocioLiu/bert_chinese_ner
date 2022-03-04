@@ -220,10 +220,10 @@ def main():
     # --
     model_config, model_class, model_tokenizer = MODEL_CLASSES[ner_config.PRETRAINED_MODEL_NAME]
 
-    model = model_class(pretrained_model_name=ner_config.BASE_MODEL_NAME,
-                        config=BertConfig.from_pretrained(ner_config.BASE_MODEL_NAME),
-                        num_tags=len(label_list),
-                        batch_first=True)
+    model = model_class.from_pretrained(pretrained_model_name=ner_config.BASE_MODEL_NAME,
+                                        config=BertConfig.from_pretrained(ner_config.BASE_MODEL_NAME),
+                                        num_tags=len(label_list),
+                                        batch_first=True)
     model.to(device)
 
     no_decay = ["bias", "LayerNorm.bias", "LayerNorm.weight"]

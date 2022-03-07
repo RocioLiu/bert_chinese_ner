@@ -1,4 +1,7 @@
-data/
+data/bert-base-chinese
+data/example.dev
+data/example.test
+data/example.train
 
 # Created by https://www.toptal.com/developers/gitignore/api/pycharm+all
 # Edit at https://www.toptal.com/developers/gitignore?templates=pycharm+all
